@@ -31,37 +31,6 @@ struct RenderData {
 	size_t current_frame = 0;
 };
 
-namespace vkb {
-namespace detail {
-	// TODO: maybe add an optional 
-	template <typename T>
-	T GetResult(const Result<T>& res) {
-		if (!res) {
-			std::cout << "CRITICAL: " << res.error().message() << "\n";
-			exit(EXIT_FAILURE);
-		}
-		return res.value();
-	}
-}
-}
-
-void device_initialization(VulkanContext& init, const Window& win) {
-	vkb::InstanceBuilder instanceBuilder = vkb::InstanceBuilder()
-		.use_default_debug_messenger()
-		.enable_validation_layers();
-	for (const auto& extName : win.GetInstanceExtensions())
-		instanceBuilder.enable_extension(extName);
-	init.instance = vkb::detail::GetResult(instanceBuilder.build());
-
-	win.CreateSurface(init.instance, &init.surface);
-
-	vkb::PhysicalDevice physical_device = vkb::detail::GetResult(
-		vkb::PhysicalDeviceSelector(init.instance).set_surface(init.surface).select()
-	);
-
-	init.device = vkb::detail::GetResult(vkb::DeviceBuilder(physical_device).build());
-}
-
 void create_swapchain(VulkanContext& init) {
 	vkb::SwapchainBuilder swapchain_builder{ init.device };
 	auto oldSwapchain = init.swapchain;
@@ -518,18 +487,14 @@ void cleanup(VulkanContext& init, RenderData& data) {
 	init.swapchain.destroy_image_views(data.swapchain_image_views);
 
 	vkb::destroy_swapchain(init.swapchain);
-	vkb::destroy_device(init.device);
-	vkb::destroy_surface(init.instance, init.surface);
-	vkb::destroy_instance(init.instance);
 }
 
 int main() {
 	Window win;
 
-	VulkanContext init;
+	VulkanContext init(win);
 	RenderData render_data;
 
-	device_initialization(init, win);
 	create_swapchain(init);
 	get_queues(init, render_data);
 	if (0 != create_render_pass(init, render_data)) return -1;
