@@ -42,10 +42,11 @@ struct RenderData {
 
 namespace vkb {
 namespace detail {
+	// TODO: maybe add an optional 
 	template <typename T>
 	T GetResult(const Result<T>& res) {
 		if (!res) {
-			std::cout << res.error().message() << "\n";
+			std::cout << "CRITICAL: " << res.error().message() << "\n";
 			exit(EXIT_FAILURE);
 		}
 		return res.value();
@@ -53,7 +54,7 @@ namespace detail {
 }
 }
 
-int device_initialization(Init& init, const Window& win) {
+void device_initialization(Init& init, const Window& win) {
 	auto instanceBuilder = vkb::InstanceBuilder()
 		.use_default_debug_messenger()
 		.enable_validation_layers();
@@ -63,52 +64,28 @@ int device_initialization(Init& init, const Window& win) {
 
 	win.CreateSurface(init.instance, &init.surface);
 
-	vkb::PhysicalDeviceSelector phys_device_selector(init.instance);
-	auto phys_device_ret = phys_device_selector.set_surface(init.surface).select();
-	if (!phys_device_ret) {
-		std::cout << phys_device_ret.error().message() << "\n";
-		return -1;
-	}
-	vkb::PhysicalDevice physical_device = phys_device_ret.value();
+	vkb::PhysicalDevice physical_device = vkb::detail::GetResult(
+		vkb::PhysicalDeviceSelector(init.instance).set_surface(init.surface).select()
+	);
 
-	vkb::DeviceBuilder device_builder{ physical_device };
-	auto device_ret = device_builder.build();
-	if (!device_ret) {
-		std::cout << device_ret.error().message() << "\n";
-		return -1;
-	}
-	init.device = device_ret.value();
-	return 0;
+	init.device = vkb::detail::GetResult(vkb::DeviceBuilder(physical_device).build());
 }
 
-int create_swapchain(Init& init) {
-
+void create_swapchain(Init& init) {
 	vkb::SwapchainBuilder swapchain_builder{ init.device };
-	auto swap_ret = swapchain_builder.set_old_swapchain(init.swapchain).build();
-	if (!swap_ret) {
-		std::cout << swap_ret.error().message() << " " << swap_ret.vk_result() << "\n";
-		return -1;
-	}
-	vkb::destroy_swapchain(init.swapchain);
-	init.swapchain = swap_ret.value();
-	return 0;
+	auto oldSwapchain = init.swapchain;
+	init.swapchain = vkb::detail::GetResult(swapchain_builder.set_old_swapchain(oldSwapchain).build());
+	vkb::destroy_swapchain(oldSwapchain);
 }
 
-int get_queues(Init& init, RenderData& data) {
-	auto gq = init.device.get_queue(vkb::QueueType::graphics);
-	if (!gq.has_value()) {
-		std::cout << "failed to get graphics queue: " << gq.error().message() << "\n";
-		return -1;
-	}
-	data.graphics_queue = gq.value();
+void get_queues(Init& init, RenderData& data) {
+	data.graphics_queue = vkb::detail::GetResult(
+		init.device.get_queue(vkb::QueueType::graphics)
+	);
 
-	auto pq = init.device.get_queue(vkb::QueueType::present);
-	if (!pq.has_value()) {
-		std::cout << "failed to get present queue: " << pq.error().message() << "\n";
-		return -1;
-	}
-	data.present_queue = pq.value();
-	return 0;
+	data.present_queue = vkb::detail::GetResult(
+		init.device.get_queue(vkb::QueueType::present)
+	);
 }
 
 int create_render_pass(Init& init, RenderData& data) {
@@ -451,7 +428,7 @@ int recreate_swapchain(Init& init, RenderData& data) {
 
 	init.swapchain.destroy_image_views(data.swapchain_image_views);
 
-	if (0 != create_swapchain(init)) return -1;
+	create_swapchain(init);
 	if (0 != create_framebuffers(init, data)) return -1;
 	if (0 != create_command_pool(init, data)) return -1;
 	if (0 != create_command_buffers(init, data)) return -1;
@@ -561,9 +538,9 @@ int main() {
 	Init init;
 	RenderData render_data;
 
-	if (0 != device_initialization(init, win)) return -1;
-	if (0 != create_swapchain(init)) return -1;
-	if (0 != get_queues(init, render_data)) return -1;
+	device_initialization(init, win);
+	create_swapchain(init);
+	get_queues(init, render_data);
 	if (0 != create_render_pass(init, render_data)) return -1;
 	if (0 != create_graphics_pipeline(init, render_data)) return -1;
 	if (0 != create_framebuffers(init, render_data)) return -1;
