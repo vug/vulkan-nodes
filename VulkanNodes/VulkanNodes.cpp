@@ -548,29 +548,6 @@ void cleanup(Init& init, RenderData& data) {
 int main() {
 	Window win;
 
-    //vkb::Instance vkb_instance = vkb::InstanceBuilder()
-    //    .set_app_name("Vulkan Nodes")
-    //    .request_validation_layers()
-    //    .use_default_debug_messenger()
-    //    .build()
-    //    .value();
-
-    //VkSurfaceKHR surface;
-    //win.CreateSurface(vkb_instance, &surface);
-    //vkb::PhysicalDevice physicalDevice = vkb::PhysicalDeviceSelector(vkb_instance)
-    //    .set_surface(surface)
-    //    .set_minimum_version(1, 2)
-    //    .require_dedicated_transfer_queue()
-    //    .select()
-    //    .value();
-
-    //vkb::Device device = vkb::DeviceBuilder(physicalDevice).build().value();
-
-    //vkb::Swapchain swapchain = vkb::SwapchainBuilder(device).build().value();
-
-    //VkQueue graphics_queue = device.get_queue(vkb::QueueType::graphics).value();
-    //VkQueue present_queue = device.get_queue(vkb::QueueType::present).value();
-
 	Init init;
 	RenderData render_data;
 
