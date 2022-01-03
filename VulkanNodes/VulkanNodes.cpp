@@ -1,22 +1,13 @@
 ﻿#include "VulkanNodes.h"
 
 #include "Window.h"
-
-#include <vulkan/vulkan.h>
-#include <VkBootstrap.h>
+#include "VulkanContext.h"
 
 #include <cassert>
 #include <iostream>
 #include <fstream>
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
-
-struct Init {
-	vkb::Instance instance;
-	VkSurfaceKHR surface = {};
-	vkb::Device device;
-	vkb::Swapchain swapchain;
-};
 
 struct RenderData {
 	VkQueue graphics_queue = {};
@@ -54,7 +45,7 @@ namespace detail {
 }
 }
 
-void device_initialization(Init& init, const Window& win) {
+void device_initialization(VulkanContext& init, const Window& win) {
 	vkb::InstanceBuilder instanceBuilder = vkb::InstanceBuilder()
 		.use_default_debug_messenger()
 		.enable_validation_layers();
@@ -71,14 +62,14 @@ void device_initialization(Init& init, const Window& win) {
 	init.device = vkb::detail::GetResult(vkb::DeviceBuilder(physical_device).build());
 }
 
-void create_swapchain(Init& init) {
+void create_swapchain(VulkanContext& init) {
 	vkb::SwapchainBuilder swapchain_builder{ init.device };
 	auto oldSwapchain = init.swapchain;
 	init.swapchain = vkb::detail::GetResult(swapchain_builder.set_old_swapchain(oldSwapchain).build());
 	vkb::destroy_swapchain(oldSwapchain);
 }
 
-void get_queues(Init& init, RenderData& data) {
+void get_queues(VulkanContext& init, RenderData& data) {
 	data.graphics_queue = vkb::detail::GetResult(
 		init.device.get_queue(vkb::QueueType::graphics)
 	);
@@ -88,7 +79,7 @@ void get_queues(Init& init, RenderData& data) {
 	);
 }
 
-int create_render_pass(Init& init, RenderData& data) {
+int create_render_pass(VulkanContext& init, RenderData& data) {
 	VkAttachmentDescription color_attachment = {};
 	color_attachment.format = init.swapchain.image_format;
 	color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -150,7 +141,7 @@ std::vector<char> readFile(const std::string& filename) {
 	return buffer;
 }
 
-VkShaderModule createShaderModule(Init& init, const std::vector<char>& code) {
+VkShaderModule createShaderModule(VulkanContext& init, const std::vector<char>& code) {
 	VkShaderModuleCreateInfo create_info = {};
 	create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	create_info.codeSize = code.size();
@@ -164,7 +155,7 @@ VkShaderModule createShaderModule(Init& init, const std::vector<char>& code) {
 	return shaderModule;
 }
 
-int create_graphics_pipeline(Init& init, RenderData& data) {
+int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	auto vert_code = readFile(std::string("shaders/shade-vert.spv"));
 	auto frag_code = readFile(std::string("shaders/shade-frag.spv"));
 
@@ -294,7 +285,7 @@ int create_graphics_pipeline(Init& init, RenderData& data) {
 	return 0;
 }
 
-int create_framebuffers(Init& init, RenderData& data) {
+int create_framebuffers(VulkanContext& init, RenderData& data) {
 	data.swapchain_images = init.swapchain.get_images().value();
 	data.swapchain_image_views = init.swapchain.get_image_views().value();
 
@@ -319,7 +310,7 @@ int create_framebuffers(Init& init, RenderData& data) {
 	return 0;
 }
 
-int create_command_pool(Init& init, RenderData& data) {
+int create_command_pool(VulkanContext& init, RenderData& data) {
 	VkCommandPoolCreateInfo pool_info = {};
 	pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	pool_info.queueFamilyIndex = init.device.get_queue_index(vkb::QueueType::graphics).value();
@@ -331,7 +322,7 @@ int create_command_pool(Init& init, RenderData& data) {
 	return 0;
 }
 
-int create_command_buffers(Init& init, RenderData& data) {
+int create_command_buffers(VulkanContext& init, RenderData& data) {
 	data.command_buffers.resize(data.framebuffers.size());
 
 	VkCommandBufferAllocateInfo allocInfo = {};
@@ -393,7 +384,7 @@ int create_command_buffers(Init& init, RenderData& data) {
 	return 0;
 }
 
-int create_sync_objects(Init& init, RenderData& data) {
+int create_sync_objects(VulkanContext& init, RenderData& data) {
 	data.available_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
 	data.finished_semaphore.resize(MAX_FRAMES_IN_FLIGHT);
 	data.in_flight_fences.resize(MAX_FRAMES_IN_FLIGHT);
@@ -417,7 +408,7 @@ int create_sync_objects(Init& init, RenderData& data) {
 	return 0;
 }
 
-int recreate_swapchain(Init& init, RenderData& data) {
+int recreate_swapchain(VulkanContext& init, RenderData& data) {
 	vkDeviceWaitIdle(init.device);
 
 	vkDestroyCommandPool(init.device, data.command_pool, nullptr);
@@ -435,7 +426,7 @@ int recreate_swapchain(Init& init, RenderData& data) {
 	return 0;
 }
 
-int draw_frame(Init& init, RenderData& data) {
+int draw_frame(VulkanContext& init, RenderData& data) {
 	vkWaitForFences(init.device, 1, &data.in_flight_fences[data.current_frame], VK_TRUE, UINT64_MAX);
 
 	uint32_t image_index = 0;
@@ -507,7 +498,7 @@ int draw_frame(Init& init, RenderData& data) {
 	return 0;
 }
 
-void cleanup(Init& init, RenderData& data) {
+void cleanup(VulkanContext& init, RenderData& data) {
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(init.device, data.finished_semaphore[i], nullptr);
 		vkDestroySemaphore(init.device, data.available_semaphores[i], nullptr);
@@ -535,7 +526,7 @@ void cleanup(Init& init, RenderData& data) {
 int main() {
 	Window win;
 
-	Init init;
+	VulkanContext init;
 	RenderData render_data;
 
 	device_initialization(init, win);
