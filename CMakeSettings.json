@@ -17,7 +17,8 @@
           "value": "x64-windows",
           "type": "STRING"
         }
-      ]
+      ],
+      "codeAnalysisRuleset": "${projectDir}\\CustomCodeAnalysis.ruleset"
     }
   ]
 }
