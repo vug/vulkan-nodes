@@ -8,6 +8,10 @@
 class Window {
 public:
 	Window();
+	Window(const Window&) = delete;
+	Window(Window&&) = delete;
+	Window& operator=(const Window&) = delete;
+	Window& operator=(Window&& other) = delete;
 	~Window();
 
 	VkResult CreateSurface(VkInstance instance, VkSurfaceKHR* surface) const;

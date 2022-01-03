@@ -12,7 +12,6 @@ GLFWwindow* Window::InitWindow() {
 	assert(glfwVulkanSupported());
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	// TODO: implement swapchain recreation at resize, then enable resizability, otherwise causes crashes by accidental resizes
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
 
 	GLFWwindow* window = glfwCreateWindow(width, height, "Vulkan Nodes", NULL, NULL);
