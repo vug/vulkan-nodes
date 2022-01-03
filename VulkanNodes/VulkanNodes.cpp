@@ -40,16 +40,26 @@ struct RenderData {
 	size_t current_frame = 0;
 };
 
-int device_initialization(Init& init, const Window& win) {
-	vkb::InstanceBuilder instance_builder;
-	auto instance_ret = instance_builder
-		.use_default_debug_messenger()
-		.enable_validation_layers().build();
-	if (!instance_ret) {
-		std::cout << instance_ret.error().message() << "\n";
-		return -1;
+namespace vkb {
+namespace detail {
+	template <typename T>
+	T GetResult(const Result<T>& res) {
+		if (!res) {
+			std::cout << res.error().message() << "\n";
+			exit(EXIT_FAILURE);
+		}
+		return res.value();
 	}
-	init.instance = instance_ret.value();
+}
+}
+
+int device_initialization(Init& init, const Window& win) {
+	auto instanceBuilder = vkb::InstanceBuilder()
+		.use_default_debug_messenger()
+		.enable_validation_layers();
+	for (const auto& extName : win.GetInstanceExtensions())
+		instanceBuilder.enable_extension(extName);
+	init.instance = vkb::detail::GetResult(instanceBuilder.build());
 
 	win.CreateSurface(init.instance, &init.surface);
 
