@@ -2,4 +2,6 @@
 
 project ("vulkan-nodes")
 
+set(CMAKE_CXX_STANDARD 23)
+
 add_subdirectory ("VulkanNodes")
