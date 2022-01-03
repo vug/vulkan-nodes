@@ -3,7 +3,7 @@
 #include "Window.h"
 
 #include <vulkan/vulkan.h>
-#include "VkBootstrap.h"
+#include <VkBootstrap.h>
 
 #include <cassert>
 #include <iostream>
@@ -13,24 +13,24 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 
 struct Init {
 	vkb::Instance instance;
-	VkSurfaceKHR surface;
+	VkSurfaceKHR surface = {};
 	vkb::Device device;
 	vkb::Swapchain swapchain;
 };
 
 struct RenderData {
-	VkQueue graphics_queue;
-	VkQueue present_queue;
+	VkQueue graphics_queue = {};
+	VkQueue present_queue = {};
 
 	std::vector<VkImage> swapchain_images;
 	std::vector<VkImageView> swapchain_image_views;
 	std::vector<VkFramebuffer> framebuffers;
 
-	VkRenderPass render_pass;
-	VkPipelineLayout pipeline_layout;
-	VkPipeline graphics_pipeline;
+	VkRenderPass render_pass = {};
+	VkPipelineLayout pipeline_layout = {};
+	VkPipeline graphics_pipeline = {};
 
-	VkCommandPool command_pool;
+	VkCommandPool command_pool = {};
 	std::vector<VkCommandBuffer> command_buffers;
 
 	std::vector<VkSemaphore> available_semaphores;
@@ -55,7 +55,7 @@ namespace detail {
 }
 
 void device_initialization(Init& init, const Window& win) {
-	auto instanceBuilder = vkb::InstanceBuilder()
+	vkb::InstanceBuilder instanceBuilder = vkb::InstanceBuilder()
 		.use_default_debug_messenger()
 		.enable_validation_layers();
 	for (const auto& extName : win.GetInstanceExtensions())
