@@ -28,14 +28,21 @@ public:
 
 	void RecreateSwapchain();
 public:
+	struct SurfaceInfo {
+		VkRenderPass renderPass;
+	};
+public:
 	const Window& win;
 	vkb::Instance instance;
 	VkSurfaceKHR surface = {};
 	vkb::Device device;
 	vkb::Swapchain swapchain;
+	SurfaceInfo surfaceInfo;
 private:
 	vkb::Instance InitInstance();
 	VkSurfaceKHR InitSurface();
 	vkb::Device InitDevice();
 	vkb::Swapchain InitSwapchain();
+	SurfaceInfo InitSurfaceInfo();
+	VkRenderPass CreateSurfaceRenderPass();
 };
