@@ -188,10 +188,12 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 }
 
 int fillCommandBuffer(VulkanContext& init, RenderData& data, int i) {
+	assert(vkResetCommandBuffer(init.commandBuffer, 0) == VK_SUCCESS);
+
 	VkCommandBufferBeginInfo begin_info = {};
 	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-
-	if (vkBeginCommandBuffer(init.commandBuffers[i], &begin_info) != VK_SUCCESS) {
+	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	if (vkBeginCommandBuffer(init.commandBuffer, &begin_info) != VK_SUCCESS) {
 		return -1; // failed to begin recording command buffer
 	}
 
@@ -220,18 +222,18 @@ int fillCommandBuffer(VulkanContext& init, RenderData& data, int i) {
 	scissor.offset = { 0, 0 };
 	scissor.extent = init.swapchain.extent;
 
-	vkCmdSetViewport(init.commandBuffers[i], 0, 1, &viewport);
-	vkCmdSetScissor(init.commandBuffers[i], 0, 1, &scissor);
+	vkCmdSetViewport(init.commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(init.commandBuffer, 0, 1, &scissor);
 
-	vkCmdBeginRenderPass(init.commandBuffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+	vkCmdBeginRenderPass(init.commandBuffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(init.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, data.graphics_pipeline);
+	vkCmdBindPipeline(init.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, data.graphics_pipeline);
 
-	vkCmdDraw(init.commandBuffers[i], 3, 1, 0, 0);
+	vkCmdDraw(init.commandBuffer, 3, 1, 0, 0);
 
-	vkCmdEndRenderPass(init.commandBuffers[i]);
+	vkCmdEndRenderPass(init.commandBuffer);
 
-	if (vkEndCommandBuffer(init.commandBuffers[i]) != VK_SUCCESS) {
+	if (vkEndCommandBuffer(init.commandBuffer) != VK_SUCCESS) {
 		std::cout << "failed to record command buffer\n";
 		return -1; // failed to record command buffer!
 	}
@@ -268,16 +270,13 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
 	VkSemaphore wait_semaphores[] = { init.sync.available_semaphores[data.current_frame] };
 	VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = wait_semaphores;
 	submitInfo.pWaitDstStageMask = wait_stages;
-
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &init.commandBuffers[image_index];
-
+	submitInfo.pCommandBuffers = &init.commandBuffer;
 	VkSemaphore signal_semaphores[] = { init.sync.finished_semaphore[data.current_frame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signal_semaphores;

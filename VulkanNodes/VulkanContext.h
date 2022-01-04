@@ -57,8 +57,9 @@ public:
 	FramebufferAttachment surfaceDepthAttachment;
 	std::vector<VkFramebuffer> surfaceFramebuffers;
 	VkCommandPool commandPool;
-	std::vector<VkCommandBuffer> commandBuffers;
-	const int MAX_FRAMES_IN_FLIGHT = 2;
+	VkCommandBuffer commandBuffer;
+	// TODO: fix the swapchain recreation issue when MAX_FRAMES_IN_FLIGHT > 1
+	const int MAX_FRAMES_IN_FLIGHT = 1;
 	Sync sync;
 private:
 	vkb::Instance InitInstance();
@@ -66,7 +67,7 @@ private:
 	vkb::Device InitDevice();
 	VkRenderPass CreateSurfaceRenderPass();
 	FramebufferAttachment CreateDepthAttachment();
-	std::vector<VkCommandBuffer> CreateCommandBuffers();
+	VkCommandBuffer CreateCommandBuffer();
 public:
 	std::vector<VkFramebuffer> CreateFramebuffers();
 	VkCommandPool CreateCommandPool();

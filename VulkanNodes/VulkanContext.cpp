@@ -40,7 +40,7 @@ VulkanContext::VulkanContext(const Window& win)
 	surfaceDepthAttachment(CreateDepthAttachment()),
 	surfaceFramebuffers(CreateFramebuffers()),
 	commandPool(CreateCommandPool()),
-	commandBuffers(CreateCommandBuffers()),
+	commandBuffer(CreateCommandBuffer()),
 	sync(InitSync()) {}
 
 vkb::Instance VulkanContext::InitInstance() {
@@ -79,22 +79,19 @@ vkb::Device VulkanContext::InitDevice() {
 	return vkb::detail::GetResult(vkb::DeviceBuilder(physical_device).build());
 }
 
-std::vector<VkCommandBuffer> VulkanContext::CreateCommandBuffers() {
-	std::vector<VkCommandBuffer> cmdBufs;
-
-	cmdBufs.resize(surfaceFramebuffers.size());
-
+VkCommandBuffer VulkanContext::CreateCommandBuffer() {
+	VkCommandBuffer cmdBuf;
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.commandPool = commandPool;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t)cmdBufs.size();
+	allocInfo.commandBufferCount = 1u;
 
-	if (vkAllocateCommandBuffers(device, &allocInfo, cmdBufs.data()) != VK_SUCCESS) {
+	if (vkAllocateCommandBuffers(device, &allocInfo, &cmdBuf) != VK_SUCCESS) {
 		exit(EXIT_FAILURE);
 	}
 
-	return cmdBufs;
+	return cmdBuf;
 }
 
 std::vector<VkFramebuffer> VulkanContext::CreateFramebuffers() {
@@ -277,7 +274,6 @@ VulkanContext::~VulkanContext() {
 void VulkanContext::RecreateSwapchain() {
 	vkDeviceWaitIdle(device);
 
-	vkDestroyCommandPool(device, commandPool, nullptr);
 	for (auto& framebuffer : surfaceFramebuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}
@@ -291,6 +287,4 @@ void VulkanContext::RecreateSwapchain() {
 
 	swapchainData = { swapchain.get_images().value(), swapchain.get_image_views().value() };
 	surfaceFramebuffers = CreateFramebuffers();
-	commandPool = CreateCommandPool();
-	commandBuffers = CreateCommandBuffers();
 }
