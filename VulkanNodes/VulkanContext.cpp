@@ -62,6 +62,7 @@ VkCommandPool VulkanContext::CreateCommandPool() {
 	VkCommandPoolCreateInfo info = {};
 	info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	info.queueFamilyIndex = device.get_queue_index(vkb::QueueType::graphics).value();
+	info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
 	VkCommandPool commandPool;
 	if (vkCreateCommandPool(device, &info, nullptr, &commandPool) != VK_SUCCESS) {

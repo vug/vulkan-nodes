@@ -187,62 +187,55 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	return 0;
 }
 
-int fill_command_buffers(VulkanContext& init, RenderData& data) {
-	for (size_t i = 0; i < init.commandBuffers.size(); i++) {
-		VkCommandBufferBeginInfo begin_info = {};
-		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+int fillCommandBuffer(VulkanContext& init, RenderData& data, int i) {
+	VkCommandBufferBeginInfo begin_info = {};
+	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-		if (vkBeginCommandBuffer(init.commandBuffers[i], &begin_info) != VK_SUCCESS) {
-			return -1; // failed to begin recording command buffer
-		}
-
-		std::vector<VkClearValue> clearValues(2);
-		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
-		clearValues[1].depthStencil = { 1.0f, 0 };
-
-		VkRenderPassBeginInfo render_pass_info = {};
-		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		render_pass_info.renderPass = init.surfaceRenderPass;
-		render_pass_info.framebuffer = init.surfaceFramebuffers[i];
-		render_pass_info.renderArea.offset = { 0, 0 };
-		render_pass_info.renderArea.extent = init.swapchain.extent;
-		render_pass_info.clearValueCount = static_cast<uint32_t>(clearValues.size());
-		render_pass_info.pClearValues = clearValues.data();
-
-		VkViewport viewport = {};
-		viewport.x = 0.0f;
-		viewport.y = 0.0f;
-		viewport.width = (float)init.swapchain.extent.width;
-		viewport.height = (float)init.swapchain.extent.height;
-		viewport.minDepth = 0.0f;
-		viewport.maxDepth = 1.0f;
-
-		VkRect2D scissor = {};
-		scissor.offset = { 0, 0 };
-		scissor.extent = init.swapchain.extent;
-
-		vkCmdSetViewport(init.commandBuffers[i], 0, 1, &viewport);
-		vkCmdSetScissor(init.commandBuffers[i], 0, 1, &scissor);
-
-		vkCmdBeginRenderPass(init.commandBuffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
-
-		vkCmdBindPipeline(init.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, data.graphics_pipeline);
-
-		vkCmdDraw(init.commandBuffers[i], 3, 1, 0, 0);
-
-		vkCmdEndRenderPass(init.commandBuffers[i]);
-
-		if (vkEndCommandBuffer(init.commandBuffers[i]) != VK_SUCCESS) {
-			std::cout << "failed to record command buffer\n";
-			return -1; // failed to record command buffer!
-		}
+	if (vkBeginCommandBuffer(init.commandBuffers[i], &begin_info) != VK_SUCCESS) {
+		return -1; // failed to begin recording command buffer
 	}
-	return 0;
-}
 
-int recreate_swapchain(VulkanContext& init, RenderData& data) {
-	init.RecreateSwapchain();
-	assert(0 == fill_command_buffers(init, data));
+	std::vector<VkClearValue> clearValues(2);
+	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+	clearValues[1].depthStencil = { 1.0f, 0 };
+
+	VkRenderPassBeginInfo render_pass_info = {};
+	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	render_pass_info.renderPass = init.surfaceRenderPass;
+	render_pass_info.framebuffer = init.surfaceFramebuffers[i];
+	render_pass_info.renderArea.offset = { 0, 0 };
+	render_pass_info.renderArea.extent = init.swapchain.extent;
+	render_pass_info.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	render_pass_info.pClearValues = clearValues.data();
+
+	VkViewport viewport = {};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)init.swapchain.extent.width;
+	viewport.height = (float)init.swapchain.extent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D scissor = {};
+	scissor.offset = { 0, 0 };
+	scissor.extent = init.swapchain.extent;
+
+	vkCmdSetViewport(init.commandBuffers[i], 0, 1, &viewport);
+	vkCmdSetScissor(init.commandBuffers[i], 0, 1, &scissor);
+
+	vkCmdBeginRenderPass(init.commandBuffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+
+	vkCmdBindPipeline(init.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, data.graphics_pipeline);
+
+	vkCmdDraw(init.commandBuffers[i], 3, 1, 0, 0);
+
+	vkCmdEndRenderPass(init.commandBuffers[i]);
+
+	if (vkEndCommandBuffer(init.commandBuffers[i]) != VK_SUCCESS) {
+		std::cout << "failed to record command buffer\n";
+		return -1; // failed to record command buffer!
+	}
+
 	return 0;
 }
 
@@ -258,7 +251,8 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 		&image_index);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-		return recreate_swapchain(init, data);
+		init.RecreateSwapchain();
+		return 0;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
 		std::cout << "failed to acquire swapchain image. Error " << result << "\n";
@@ -269,6 +263,8 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 		vkWaitForFences(init.device, 1, &init.sync.image_in_flight[image_index], VK_TRUE, UINT64_MAX);
 	}
 	init.sync.image_in_flight[image_index] = init.sync.in_flight_fences[data.current_frame];
+
+	assert(0 == fillCommandBuffer(init, data, image_index));
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -307,7 +303,8 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 
 	result = vkQueuePresentKHR(init.present_queue, &present_info);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
-		return recreate_swapchain(init, data);
+		init.RecreateSwapchain();
+		return 0;
 	}
 	else if (result != VK_SUCCESS) {
 		std::cout << "failed to present swapchain image\n";
@@ -331,7 +328,6 @@ int main() {
 	RenderData render_data;
 
 	assert(0 == create_graphics_pipeline(init, render_data));
-	assert(0 == fill_command_buffers(init, render_data));
 
 	while (!win.ShouldClose()) {
 		win.PollEvents();
