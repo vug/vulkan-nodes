@@ -4,7 +4,8 @@ VulkanContext::VulkanContext(const Window& win)
 	: win(win),
 	instance(InitInstance()),
 	surface(InitSurface()),
-	device(InitDevice()) {
+	device(InitDevice()),
+	swapchain(InitSwapchain()) {
 }
 
 vkb::Instance VulkanContext::InitInstance() {
@@ -29,8 +30,22 @@ vkb::Device VulkanContext::InitDevice() {
 	return vkb::detail::GetResult(vkb::DeviceBuilder(physical_device).build());
 }
 
+vkb::Swapchain VulkanContext::InitSwapchain() {
+	vkb::SwapchainBuilder swapchain_builder{ device };
+	vkb::Swapchain newSwapchain = vkb::detail::GetResult(swapchain_builder.set_old_swapchain(nullptr).build());
+	return newSwapchain;
+}
+
 VulkanContext::~VulkanContext() {
 	vkb::destroy_device(device);
 	vkb::destroy_surface(instance, surface);
 	vkb::destroy_instance(instance);
+}
+
+void VulkanContext::RecreateSwapchain() {
+	auto oldSwapchain = swapchain;
+	swapchain = vkb::detail::GetResult(
+		vkb::SwapchainBuilder(device).set_old_swapchain(oldSwapchain).build()
+	);
+	vkb::destroy_swapchain(oldSwapchain);
 }

@@ -25,6 +25,8 @@ class VulkanContext {
 public:
 	VulkanContext(const Window& win);
 	~VulkanContext();
+
+	void RecreateSwapchain();
 public:
 	const Window& win;
 	vkb::Instance instance;
@@ -35,4 +37,5 @@ private:
 	vkb::Instance InitInstance();
 	VkSurfaceKHR InitSurface();
 	vkb::Device InitDevice();
+	vkb::Swapchain InitSwapchain();
 };

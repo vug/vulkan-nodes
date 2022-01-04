@@ -31,13 +31,6 @@ struct RenderData {
 	size_t current_frame = 0;
 };
 
-void create_swapchain(VulkanContext& init) {
-	vkb::SwapchainBuilder swapchain_builder{ init.device };
-	auto oldSwapchain = init.swapchain;
-	init.swapchain = vkb::detail::GetResult(swapchain_builder.set_old_swapchain(oldSwapchain).build());
-	vkb::destroy_swapchain(oldSwapchain);
-}
-
 void get_queues(VulkanContext& init, RenderData& data) {
 	data.graphics_queue = vkb::detail::GetResult(
 		init.device.get_queue(vkb::QueueType::graphics)
@@ -304,6 +297,10 @@ int create_command_buffers(VulkanContext& init, RenderData& data) {
 		return -1; // failed to allocate command buffers;
 	}
 
+	return 0;
+}
+
+int fill_command_buffers(VulkanContext& init, RenderData& data) {
 	for (size_t i = 0; i < data.command_buffers.size(); i++) {
 		VkCommandBufferBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -388,10 +385,11 @@ int recreate_swapchain(VulkanContext& init, RenderData& data) {
 
 	init.swapchain.destroy_image_views(data.swapchain_image_views);
 
-	create_swapchain(init);
-	if (0 != create_framebuffers(init, data)) return -1;
-	if (0 != create_command_pool(init, data)) return -1;
-	if (0 != create_command_buffers(init, data)) return -1;
+	init.RecreateSwapchain();
+	assert(0 == create_framebuffers(init, data));
+	assert(0 == create_command_pool(init, data));
+	assert(0 == create_command_buffers(init, data));
+	assert(0 == fill_command_buffers(init, data));
 	return 0;
 }
 
@@ -489,21 +487,21 @@ void cleanup(VulkanContext& init, RenderData& data) {
 	vkb::destroy_swapchain(init.swapchain);
 }
 
+
 int main() {
 	Window win;
 
 	VulkanContext init(win);
 	RenderData render_data;
 
-	create_swapchain(init);
 	get_queues(init, render_data);
-	if (0 != create_render_pass(init, render_data)) return -1;
-	if (0 != create_graphics_pipeline(init, render_data)) return -1;
-	if (0 != create_framebuffers(init, render_data)) return -1;
-	if (0 != create_command_pool(init, render_data)) return -1;
-	if (0 != create_command_buffers(init, render_data)) return -1;
-	if (0 != create_sync_objects(init, render_data)) return -1;
-
+	assert(0 == create_render_pass(init, render_data));
+	assert(0 == create_framebuffers(init, render_data));
+	assert(0 == create_command_pool(init, render_data));
+	assert(0 == create_command_buffers(init, render_data));
+	assert(0 == create_sync_objects(init, render_data));
+	assert(0 == create_graphics_pipeline(init, render_data));
+	assert(0 == fill_command_buffers(init, render_data));
 
 	while (!win.ShouldClose()) {
 		win.PollEvents();
