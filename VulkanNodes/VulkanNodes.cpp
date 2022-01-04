@@ -13,7 +13,6 @@ struct RenderData {
 	VkPipelineLayout pipeline_layout = {};
 	VkPipeline graphics_pipeline = {};
 
-	VkCommandPool command_pool = {};
 	std::vector<VkCommandBuffer> command_buffers;
 
 	std::vector<VkSemaphore> available_semaphores;
@@ -197,25 +196,13 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	return 0;
 }
 
-int create_command_pool(VulkanContext& init, RenderData& data) {
-	VkCommandPoolCreateInfo pool_info = {};
-	pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	pool_info.queueFamilyIndex = init.device.get_queue_index(vkb::QueueType::graphics).value();
-
-	if (vkCreateCommandPool(init.device, &pool_info, nullptr, &data.command_pool) != VK_SUCCESS) {
-		std::cout << "failed to create command pool\n";
-		return -1; // failed to create command pool
-	}
-	return 0;
-}
-
 int create_command_buffers(VulkanContext& init, RenderData& data) {
 	//data.command_buffers.resize(init.surfaceInfo.framebuffers.size());
 	data.command_buffers.resize(3);
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = data.command_pool;
+	allocInfo.commandPool = init.commandPool;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = (uint32_t)data.command_buffers.size();
 
@@ -307,7 +294,7 @@ int create_sync_objects(VulkanContext& init, RenderData& data) {
 int recreate_swapchain(VulkanContext& init, RenderData& data) {
 	vkDeviceWaitIdle(init.device);
 
-	vkDestroyCommandPool(init.device, data.command_pool, nullptr);
+	vkDestroyCommandPool(init.device, init.commandPool, nullptr);
 
 	for (auto framebuffer : init.surfaceFramebuffers) {
 		vkDestroyFramebuffer(init.device, framebuffer, nullptr);
@@ -315,7 +302,7 @@ int recreate_swapchain(VulkanContext& init, RenderData& data) {
 
 	init.RecreateSwapchain();
 	init.surfaceFramebuffers = init.CreateFramebuffers();
-	assert(0 == create_command_pool(init, data));
+	init.commandPool = init.CreateCommandPool();
 	assert(0 == create_command_buffers(init, data));
 	assert(0 == fill_command_buffers(init, data));
 	return 0;
@@ -400,8 +387,6 @@ void cleanup(VulkanContext& init, RenderData& data) {
 		vkDestroyFence(init.device, data.in_flight_fences[i], nullptr);
 	}
 
-	vkDestroyCommandPool(init.device, data.command_pool, nullptr);
-
 	vkDestroyPipeline(init.device, data.graphics_pipeline, nullptr);
 	vkDestroyPipelineLayout(init.device, data.pipeline_layout, nullptr);
 }
@@ -413,7 +398,6 @@ int main() {
 	VulkanContext init(win);
 	RenderData render_data;
 
-	assert(0 == create_command_pool(init, render_data));
 	assert(0 == create_command_buffers(init, render_data));
 	assert(0 == create_sync_objects(init, render_data));
 	assert(0 == create_graphics_pipeline(init, render_data));

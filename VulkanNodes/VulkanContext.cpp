@@ -38,7 +38,8 @@ VulkanContext::VulkanContext(const Window& win)
     surfaceDepthFormat(VK_FORMAT_D24_UNORM_S8_UINT),
 	surfaceRenderPass(CreateSurfaceRenderPass()),
 	surfaceDepthAttachment(CreateDepthAttachment()),
-	surfaceFramebuffers(CreateFramebuffers()) {}
+	surfaceFramebuffers(CreateFramebuffers()),
+	commandPool(CreateCommandPool()) {}
 
 vkb::Instance VulkanContext::InitInstance() {
 	vkb::InstanceBuilder instanceBuilder = vkb::InstanceBuilder()
@@ -53,6 +54,19 @@ VkSurfaceKHR VulkanContext::InitSurface() {
 	VkSurfaceKHR surface;
 	win.CreateSurface(instance, &surface);
 	return surface;
+}
+
+VkCommandPool VulkanContext::CreateCommandPool() {
+	VkCommandPoolCreateInfo info = {};
+	info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	info.queueFamilyIndex = device.get_queue_index(vkb::QueueType::graphics).value();
+
+	VkCommandPool commandPool;
+	if (vkCreateCommandPool(device, &info, nullptr, &commandPool) != VK_SUCCESS) {
+		std::cout << "failed to create command pool\n";
+		exit(EXIT_FAILURE);
+	}
+	return commandPool;
 }
 
 vkb::Device VulkanContext::InitDevice() {
@@ -188,6 +202,8 @@ VulkanContext::FramebufferAttachment VulkanContext::CreateDepthAttachment() {
 }
 
 VulkanContext::~VulkanContext() {
+	vkDestroyCommandPool(device, commandPool, nullptr);
+
 	for (auto& framebuffer : surfaceFramebuffers) {
 		vkDestroyFramebuffer(device, framebuffer, nullptr);
 	}

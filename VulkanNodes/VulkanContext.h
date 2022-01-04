@@ -38,8 +38,6 @@ public:
 		VkImageView imageView = VK_NULL_HANDLE;
 	};
 
-	FramebufferAttachment CreateDepthAttachment();
-	std::vector<VkFramebuffer> CreateFramebuffers();
 public:
 	const Window& win;
 	vkb::Instance instance;
@@ -53,9 +51,14 @@ public:
 	VkRenderPass surfaceRenderPass;
 	FramebufferAttachment surfaceDepthAttachment;
 	std::vector<VkFramebuffer> surfaceFramebuffers;
+	VkCommandPool commandPool;
 private:
 	vkb::Instance InitInstance();
 	VkSurfaceKHR InitSurface();
 	vkb::Device InitDevice();
 	VkRenderPass CreateSurfaceRenderPass();
+	FramebufferAttachment CreateDepthAttachment();
+public:
+	std::vector<VkFramebuffer> CreateFramebuffers();
+	VkCommandPool CreateCommandPool();
 };
