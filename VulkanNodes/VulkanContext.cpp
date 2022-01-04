@@ -29,6 +29,8 @@ VulkanContext::VulkanContext(const Window& win)
 	instance(InitInstance()),
 	surface(InitSurface()),
 	device(InitDevice()),
+	graphics_queue(vkb::detail::GetResult(device.get_queue(vkb::QueueType::graphics))),
+	present_queue(vkb::detail::GetResult(device.get_queue(vkb::QueueType::present))),
 	swapchain(vkb::detail::GetResult(vkb::SwapchainBuilder(device).build())),
 	// vkb::Swapchain's get_images() and _views methods are meant to be only called once after Swapchain is created
 	// It's a confusing API, so we have to make sure to update swapchainData any time we recreate swapchain too

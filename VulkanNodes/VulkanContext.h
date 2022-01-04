@@ -47,6 +47,8 @@ public:
 	vkb::Instance instance;
 	VkSurfaceKHR surface = {};
 	vkb::Device device;
+	VkQueue graphics_queue;
+	VkQueue present_queue;
 	vkb::Swapchain swapchain;
 	SwapchainData swapchainData;
 	VkFormat depthFormat;

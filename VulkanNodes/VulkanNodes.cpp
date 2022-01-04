@@ -10,9 +10,6 @@
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 struct RenderData {
-	VkQueue graphics_queue = {};
-	VkQueue present_queue = {};
-
 	std::vector<VkFramebuffer> framebuffers;
 
 	VkPipelineLayout pipeline_layout = {};
@@ -27,16 +24,6 @@ struct RenderData {
 	std::vector<VkFence> image_in_flight;
 	size_t current_frame = 0;
 };
-
-void get_queues(VulkanContext& init, RenderData& data) {
-	data.graphics_queue = vkb::detail::GetResult(
-		init.device.get_queue(vkb::QueueType::graphics)
-	);
-
-	data.present_queue = vkb::detail::GetResult(
-		init.device.get_queue(vkb::QueueType::present)
-	);
-}
 
 std::vector<char> readFile(const std::string& filename) {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -400,7 +387,7 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 
 	vkResetFences(init.device, 1, &data.in_flight_fences[data.current_frame]);
 
-	if (vkQueueSubmit(data.graphics_queue, 1, &submitInfo, data.in_flight_fences[data.current_frame]) != VK_SUCCESS) {
+	if (vkQueueSubmit(init.graphics_queue, 1, &submitInfo, data.in_flight_fences[data.current_frame]) != VK_SUCCESS) {
 		std::cout << "failed to submit draw command buffer\n";
 		return -1; //"failed to submit draw command buffer
 	}
@@ -417,7 +404,7 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 
 	present_info.pImageIndices = &image_index;
 
-	result = vkQueuePresentKHR(data.present_queue, &present_info);
+	result = vkQueuePresentKHR(init.present_queue, &present_info);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
 		return recreate_swapchain(init, data);
 	}
@@ -454,7 +441,6 @@ int main() {
 	VulkanContext init(win);
 	RenderData render_data;
 
-	get_queues(init, render_data);
 	assert(0 == create_framebuffers(init, render_data));
 	assert(0 == create_command_pool(init, render_data));
 	assert(0 == create_command_buffers(init, render_data));
