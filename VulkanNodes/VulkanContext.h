@@ -37,7 +37,12 @@ public:
 		VkDeviceMemory memory = VK_NULL_HANDLE;
 		VkImageView imageView = VK_NULL_HANDLE;
 	};
-
+	struct Sync {
+		std::vector<VkSemaphore> available_semaphores;
+		std::vector<VkSemaphore> finished_semaphore;
+		std::vector<VkFence> in_flight_fences;
+		std::vector<VkFence> image_in_flight;
+	};
 public:
 	const Window& win;
 	vkb::Instance instance;
@@ -54,6 +59,7 @@ public:
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
 	const int MAX_FRAMES_IN_FLIGHT = 2;
+	Sync sync;
 private:
 	vkb::Instance InitInstance();
 	VkSurfaceKHR InitSurface();
@@ -64,4 +70,6 @@ private:
 public:
 	std::vector<VkFramebuffer> CreateFramebuffers();
 	VkCommandPool CreateCommandPool();
+private:
+	Sync InitSync();
 };

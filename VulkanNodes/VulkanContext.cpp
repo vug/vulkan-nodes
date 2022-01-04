@@ -40,7 +40,8 @@ VulkanContext::VulkanContext(const Window& win)
 	surfaceDepthAttachment(CreateDepthAttachment()),
 	surfaceFramebuffers(CreateFramebuffers()),
 	commandPool(CreateCommandPool()),
-	commandBuffers(CreateCommandBuffers()) {}
+	commandBuffers(CreateCommandBuffers()),
+	sync(InitSync()) {}
 
 vkb::Instance VulkanContext::InitInstance() {
 	vkb::InstanceBuilder instanceBuilder = vkb::InstanceBuilder()
@@ -177,6 +178,31 @@ VkRenderPass VulkanContext::CreateSurfaceRenderPass() {
     return renderPass;
 }
 
+VulkanContext::Sync VulkanContext::InitSync() {
+	Sync sync;
+	sync.available_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
+	sync.finished_semaphore.resize(MAX_FRAMES_IN_FLIGHT);
+	sync.in_flight_fences.resize(MAX_FRAMES_IN_FLIGHT);
+	sync.image_in_flight.resize(swapchain.image_count, VK_NULL_HANDLE);
+
+	VkSemaphoreCreateInfo semaphore_info = {};
+	semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+	VkFenceCreateInfo fence_info = {};
+	fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		if (vkCreateSemaphore(device, &semaphore_info, nullptr, &sync.available_semaphores[i]) != VK_SUCCESS ||
+			vkCreateSemaphore(device, &semaphore_info, nullptr, &sync.finished_semaphore[i]) != VK_SUCCESS ||
+			vkCreateFence(device, &fence_info, nullptr, &sync.in_flight_fences[i]) != VK_SUCCESS) {
+			std::cout << "failed to create sync objects\n";
+			exit(EXIT_FAILURE);
+		}
+	}
+	return sync;
+}
+
 VulkanContext::FramebufferAttachment VulkanContext::CreateDepthAttachment() {
 	FramebufferAttachment attachment;
 
@@ -221,6 +247,12 @@ VulkanContext::FramebufferAttachment VulkanContext::CreateDepthAttachment() {
 }
 
 VulkanContext::~VulkanContext() {
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		vkDestroySemaphore(device, sync.finished_semaphore[i], nullptr);
+		vkDestroySemaphore(device, sync.available_semaphores[i], nullptr);
+		vkDestroyFence(device, sync.in_flight_fences[i], nullptr);
+	}
+
 	vkDestroyCommandPool(device, commandPool, nullptr);
 
 	for (auto& framebuffer : surfaceFramebuffers) {

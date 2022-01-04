@@ -10,11 +10,6 @@
 struct RenderData {
 	VkPipelineLayout pipeline_layout = {};
 	VkPipeline graphics_pipeline = {};
-
-	std::vector<VkSemaphore> available_semaphores;
-	std::vector<VkSemaphore> finished_semaphore;
-	std::vector<VkFence> in_flight_fences;
-	std::vector<VkFence> image_in_flight;
 	size_t current_frame = 0;
 };
 
@@ -205,7 +200,6 @@ int fill_command_buffers(VulkanContext& init, RenderData& data) {
 		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
 		clearValues[1].depthStencil = { 1.0f, 0 };
 
-
 		VkRenderPassBeginInfo render_pass_info = {};
 		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		render_pass_info.renderPass = init.surfaceRenderPass;
@@ -246,30 +240,6 @@ int fill_command_buffers(VulkanContext& init, RenderData& data) {
 	return 0;
 }
 
-int create_sync_objects(VulkanContext& init, RenderData& data) {
-	data.available_semaphores.resize(init.MAX_FRAMES_IN_FLIGHT);
-	data.finished_semaphore.resize(init.MAX_FRAMES_IN_FLIGHT);
-	data.in_flight_fences.resize(init.MAX_FRAMES_IN_FLIGHT);
-	data.image_in_flight.resize(init.swapchain.image_count, VK_NULL_HANDLE);
-
-	VkSemaphoreCreateInfo semaphore_info = {};
-	semaphore_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-	VkFenceCreateInfo fence_info = {};
-	fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-	fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-
-	for (size_t i = 0; i < init.MAX_FRAMES_IN_FLIGHT; i++) {
-		if (vkCreateSemaphore(init.device, &semaphore_info, nullptr, &data.available_semaphores[i]) != VK_SUCCESS ||
-			vkCreateSemaphore(init.device, &semaphore_info, nullptr, &data.finished_semaphore[i]) != VK_SUCCESS ||
-			vkCreateFence(init.device, &fence_info, nullptr, &data.in_flight_fences[i]) != VK_SUCCESS) {
-			std::cout << "failed to create sync objects\n";
-			return -1; // failed to create synchronization objects for a frame
-		}
-	}
-	return 0;
-}
-
 int recreate_swapchain(VulkanContext& init, RenderData& data) {
 	init.RecreateSwapchain();
 	assert(0 == fill_command_buffers(init, data));
@@ -277,13 +247,13 @@ int recreate_swapchain(VulkanContext& init, RenderData& data) {
 }
 
 int draw_frame(VulkanContext& init, RenderData& data) {
-	vkWaitForFences(init.device, 1, &data.in_flight_fences[data.current_frame], VK_TRUE, UINT64_MAX);
+	vkWaitForFences(init.device, 1, &init.sync.in_flight_fences[data.current_frame], VK_TRUE, UINT64_MAX);
 
 	uint32_t image_index = 0;
 	VkResult result = vkAcquireNextImageKHR(init.device,
 		init.swapchain,
 		UINT64_MAX,
-		data.available_semaphores[data.current_frame],
+		init.sync.available_semaphores[data.current_frame],
 		VK_NULL_HANDLE,
 		&image_index);
 
@@ -295,15 +265,15 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 		return -1;
 	}
 
-	if (data.image_in_flight[image_index] != VK_NULL_HANDLE) {
-		vkWaitForFences(init.device, 1, &data.image_in_flight[image_index], VK_TRUE, UINT64_MAX);
+	if (init.sync.image_in_flight[image_index] != VK_NULL_HANDLE) {
+		vkWaitForFences(init.device, 1, &init.sync.image_in_flight[image_index], VK_TRUE, UINT64_MAX);
 	}
-	data.image_in_flight[image_index] = data.in_flight_fences[data.current_frame];
+	init.sync.image_in_flight[image_index] = init.sync.in_flight_fences[data.current_frame];
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-	VkSemaphore wait_semaphores[] = { data.available_semaphores[data.current_frame] };
+	VkSemaphore wait_semaphores[] = { init.sync.available_semaphores[data.current_frame] };
 	VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = wait_semaphores;
@@ -312,13 +282,13 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &init.commandBuffers[image_index];
 
-	VkSemaphore signal_semaphores[] = { data.finished_semaphore[data.current_frame] };
+	VkSemaphore signal_semaphores[] = { init.sync.finished_semaphore[data.current_frame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signal_semaphores;
 
-	vkResetFences(init.device, 1, &data.in_flight_fences[data.current_frame]);
+	vkResetFences(init.device, 1, &init.sync.in_flight_fences[data.current_frame]);
 
-	if (vkQueueSubmit(init.graphics_queue, 1, &submitInfo, data.in_flight_fences[data.current_frame]) != VK_SUCCESS) {
+	if (vkQueueSubmit(init.graphics_queue, 1, &submitInfo, init.sync.in_flight_fences[data.current_frame]) != VK_SUCCESS) {
 		std::cout << "failed to submit draw command buffer\n";
 		return -1; //"failed to submit draw command buffer
 	}
@@ -349,12 +319,6 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 }
 
 void cleanup(VulkanContext& init, RenderData& data) {
-	for (size_t i = 0; i < init.MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroySemaphore(init.device, data.finished_semaphore[i], nullptr);
-		vkDestroySemaphore(init.device, data.available_semaphores[i], nullptr);
-		vkDestroyFence(init.device, data.in_flight_fences[i], nullptr);
-	}
-
 	vkDestroyPipeline(init.device, data.graphics_pipeline, nullptr);
 	vkDestroyPipelineLayout(init.device, data.pipeline_layout, nullptr);
 }
@@ -366,7 +330,6 @@ int main() {
 	VulkanContext init(win);
 	RenderData render_data;
 
-	assert(0 == create_sync_objects(init, render_data));
 	assert(0 == create_graphics_pipeline(init, render_data));
 	assert(0 == fill_command_buffers(init, render_data));
 
