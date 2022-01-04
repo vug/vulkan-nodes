@@ -292,17 +292,7 @@ int create_sync_objects(VulkanContext& init, RenderData& data) {
 }
 
 int recreate_swapchain(VulkanContext& init, RenderData& data) {
-	vkDeviceWaitIdle(init.device);
-
-	vkDestroyCommandPool(init.device, init.commandPool, nullptr);
-
-	for (auto framebuffer : init.surfaceFramebuffers) {
-		vkDestroyFramebuffer(init.device, framebuffer, nullptr);
-	}
-
 	init.RecreateSwapchain();
-	init.surfaceFramebuffers = init.CreateFramebuffers();
-	init.commandPool = init.CreateCommandPool();
 	assert(0 == create_command_buffers(init, data));
 	assert(0 == fill_command_buffers(init, data));
 	return 0;

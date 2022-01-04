@@ -223,12 +223,21 @@ VulkanContext::~VulkanContext() {
 }
 
 void VulkanContext::RecreateSwapchain() {
+	vkDeviceWaitIdle(device);
+
+	vkDestroyCommandPool(device, commandPool, nullptr);
+	for (auto& framebuffer : surfaceFramebuffers) {
+		vkDestroyFramebuffer(device, framebuffer, nullptr);
+	}
 	swapchain.destroy_image_views(swapchainData.imageViews);
 
 	auto oldSwapchain = swapchain;
 	swapchain = vkb::detail::GetResult(
 		vkb::SwapchainBuilder(device).set_old_swapchain(oldSwapchain).build()
 	);
-	swapchainData = { swapchain.get_images().value(), swapchain.get_image_views().value() };
 	vkb::destroy_swapchain(oldSwapchain);
+
+	swapchainData = { swapchain.get_images().value(), swapchain.get_image_views().value() };
+	surfaceFramebuffers = CreateFramebuffers();
+	commandPool = CreateCommandPool();
 }
