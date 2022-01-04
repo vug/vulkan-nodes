@@ -13,8 +13,6 @@ struct RenderData {
 	VkQueue graphics_queue = {};
 	VkQueue present_queue = {};
 
-	std::vector<VkImage> swapchain_images;
-	std::vector<VkImageView> swapchain_image_views;
 	std::vector<VkFramebuffer> framebuffers;
 
 	VkPipelineLayout pipeline_layout = {};
@@ -215,13 +213,11 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 }
 
 int create_framebuffers(VulkanContext& init, RenderData& data) {
-	data.swapchain_images = init.swapchain.get_images().value();
-	data.swapchain_image_views = init.swapchain.get_image_views().value();
 	init.surfaceInfo.depthAttachment = init.CreateDepthAttachment();
-	data.framebuffers.resize(data.swapchain_image_views.size());
+	data.framebuffers.resize(init.swapchainData.imageViews.size());
 
-	for (size_t i = 0; i < data.swapchain_image_views.size(); i++) {
-		std::vector<VkImageView> attachments = { data.swapchain_image_views[i], init.surfaceInfo.depthAttachment.imageView };
+	for (size_t i = 0; i < init.swapchainData.imageViews.size(); i++) {
+		std::vector<VkImageView> attachments = { init.swapchainData.imageViews[i], init.surfaceInfo.depthAttachment.imageView };
 
 		VkFramebufferCreateInfo framebuffer_info = {};
 		framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -354,11 +350,6 @@ int recreate_swapchain(VulkanContext& init, RenderData& data) {
 		vkDestroyFramebuffer(init.device, framebuffer, nullptr);
 	}
 
-	init.swapchain.destroy_image_views(data.swapchain_image_views);
-	vkDestroyImage(init.device, init.surfaceInfo.depthAttachment.image, nullptr);
-	vkDestroyImageView(init.device, init.surfaceInfo.depthAttachment.imageView, nullptr);
-	vkFreeMemory(init.device, init.surfaceInfo.depthAttachment.memory, nullptr);
-
 	init.RecreateSwapchain();
 	assert(0 == create_framebuffers(init, data));
 	assert(0 == create_command_pool(init, data));
@@ -454,8 +445,6 @@ void cleanup(VulkanContext& init, RenderData& data) {
 
 	vkDestroyPipeline(init.device, data.graphics_pipeline, nullptr);
 	vkDestroyPipelineLayout(init.device, data.pipeline_layout, nullptr);
-
-	init.swapchain.destroy_image_views(data.swapchain_image_views);
 }
 
 

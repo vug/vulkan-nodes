@@ -28,6 +28,10 @@ public:
 
 	void RecreateSwapchain();
 public:
+	struct SwapchainData {
+		std::vector<VkImage> images;
+		std::vector<VkImageView> imageViews;
+	};
 	struct FramebufferAttachment {
 		VkImage image = VK_NULL_HANDLE;
 		VkDeviceMemory memory = VK_NULL_HANDLE;
@@ -44,13 +48,13 @@ public:
 	VkSurfaceKHR surface = {};
 	vkb::Device device;
 	vkb::Swapchain swapchain;
+	SwapchainData swapchainData;
 	VkFormat depthFormat;
 	SurfaceInfo surfaceInfo = {};
 private:
 	vkb::Instance InitInstance();
 	VkSurfaceKHR InitSurface();
 	vkb::Device InitDevice();
-	vkb::Swapchain InitSwapchain();
 	SurfaceInfo InitSurfaceInfo();
 	VkRenderPass CreateSurfaceRenderPass();
 };

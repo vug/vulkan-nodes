@@ -29,7 +29,10 @@ VulkanContext::VulkanContext(const Window& win)
 	instance(InitInstance()),
 	surface(InitSurface()),
 	device(InitDevice()),
-	swapchain(InitSwapchain()),
+	swapchain(vkb::detail::GetResult(vkb::SwapchainBuilder(device).build())),
+	// vkb::Swapchain's get_images() and _views methods are meant to be only called once after Swapchain is created
+	// It's a confusing API, so we have to make sure to update swapchainData any time we recreate swapchain too
+	swapchainData({ swapchain.get_images().value(), swapchain.get_image_views().value() }),
     depthFormat(VK_FORMAT_D24_UNORM_S8_UINT),
 	surfaceInfo(InitSurfaceInfo()) {}
 
@@ -53,12 +56,6 @@ vkb::Device VulkanContext::InitDevice() {
 		vkb::PhysicalDeviceSelector(instance).set_surface(surface).select()
 	);
 	return vkb::detail::GetResult(vkb::DeviceBuilder(physical_device).build());
-}
-
-vkb::Swapchain VulkanContext::InitSwapchain() {
-	vkb::SwapchainBuilder swapchain_builder{ device };
-	vkb::Swapchain newSwapchain = vkb::detail::GetResult(swapchain_builder.set_old_swapchain(nullptr).build());
-	return newSwapchain;
 }
 
 VulkanContext::SurfaceInfo VulkanContext::InitSurfaceInfo() {
@@ -166,6 +163,7 @@ VulkanContext::FramebufferAttachment VulkanContext::CreateDepthAttachment() {
 }
 
 VulkanContext::~VulkanContext() {
+	swapchain.destroy_image_views(swapchainData.imageViews);
 	vkb::destroy_swapchain(swapchain);
 
 	vkFreeMemory(device, surfaceInfo.depthAttachment.memory, nullptr);
@@ -180,9 +178,15 @@ VulkanContext::~VulkanContext() {
 }
 
 void VulkanContext::RecreateSwapchain() {
+	swapchain.destroy_image_views(swapchainData.imageViews);
+	vkDestroyImage(device, surfaceInfo.depthAttachment.image, nullptr);
+	vkDestroyImageView(device, surfaceInfo.depthAttachment.imageView, nullptr);
+	vkFreeMemory(device, surfaceInfo.depthAttachment.memory, nullptr);
+
 	auto oldSwapchain = swapchain;
 	swapchain = vkb::detail::GetResult(
 		vkb::SwapchainBuilder(device).set_old_swapchain(oldSwapchain).build()
 	);
+	swapchainData = { swapchain.get_images().value(), swapchain.get_image_views().value() };
 	vkb::destroy_swapchain(oldSwapchain);
 }
