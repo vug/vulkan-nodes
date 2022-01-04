@@ -52,12 +52,15 @@ public:
 	FramebufferAttachment surfaceDepthAttachment;
 	std::vector<VkFramebuffer> surfaceFramebuffers;
 	VkCommandPool commandPool;
+	std::vector<VkCommandBuffer> commandBuffers;
+	const int MAX_FRAMES_IN_FLIGHT = 2;
 private:
 	vkb::Instance InitInstance();
 	VkSurfaceKHR InitSurface();
 	vkb::Device InitDevice();
 	VkRenderPass CreateSurfaceRenderPass();
 	FramebufferAttachment CreateDepthAttachment();
+	std::vector<VkCommandBuffer> CreateCommandBuffers();
 public:
 	std::vector<VkFramebuffer> CreateFramebuffers();
 	VkCommandPool CreateCommandPool();

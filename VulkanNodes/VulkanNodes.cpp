@@ -7,13 +7,9 @@
 #include <iostream>
 #include <fstream>
 
-const int MAX_FRAMES_IN_FLIGHT = 2;
-
 struct RenderData {
 	VkPipelineLayout pipeline_layout = {};
 	VkPipeline graphics_pipeline = {};
-
-	std::vector<VkCommandBuffer> command_buffers;
 
 	std::vector<VkSemaphore> available_semaphores;
 	std::vector<VkSemaphore> finished_semaphore;
@@ -196,29 +192,12 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	return 0;
 }
 
-int create_command_buffers(VulkanContext& init, RenderData& data) {
-	//data.command_buffers.resize(init.surfaceInfo.framebuffers.size());
-	data.command_buffers.resize(3);
-
-	VkCommandBufferAllocateInfo allocInfo = {};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = init.commandPool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t)data.command_buffers.size();
-
-	if (vkAllocateCommandBuffers(init.device, &allocInfo, data.command_buffers.data()) != VK_SUCCESS) {
-		return -1; // failed to allocate command buffers;
-	}
-
-	return 0;
-}
-
 int fill_command_buffers(VulkanContext& init, RenderData& data) {
-	for (size_t i = 0; i < data.command_buffers.size(); i++) {
+	for (size_t i = 0; i < init.commandBuffers.size(); i++) {
 		VkCommandBufferBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 
-		if (vkBeginCommandBuffer(data.command_buffers[i], &begin_info) != VK_SUCCESS) {
+		if (vkBeginCommandBuffer(init.commandBuffers[i], &begin_info) != VK_SUCCESS) {
 			return -1; // failed to begin recording command buffer
 		}
 
@@ -248,18 +227,18 @@ int fill_command_buffers(VulkanContext& init, RenderData& data) {
 		scissor.offset = { 0, 0 };
 		scissor.extent = init.swapchain.extent;
 
-		vkCmdSetViewport(data.command_buffers[i], 0, 1, &viewport);
-		vkCmdSetScissor(data.command_buffers[i], 0, 1, &scissor);
+		vkCmdSetViewport(init.commandBuffers[i], 0, 1, &viewport);
+		vkCmdSetScissor(init.commandBuffers[i], 0, 1, &scissor);
 
-		vkCmdBeginRenderPass(data.command_buffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(init.commandBuffers[i], &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		vkCmdBindPipeline(data.command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, data.graphics_pipeline);
+		vkCmdBindPipeline(init.commandBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, data.graphics_pipeline);
 
-		vkCmdDraw(data.command_buffers[i], 3, 1, 0, 0);
+		vkCmdDraw(init.commandBuffers[i], 3, 1, 0, 0);
 
-		vkCmdEndRenderPass(data.command_buffers[i]);
+		vkCmdEndRenderPass(init.commandBuffers[i]);
 
-		if (vkEndCommandBuffer(data.command_buffers[i]) != VK_SUCCESS) {
+		if (vkEndCommandBuffer(init.commandBuffers[i]) != VK_SUCCESS) {
 			std::cout << "failed to record command buffer\n";
 			return -1; // failed to record command buffer!
 		}
@@ -268,9 +247,9 @@ int fill_command_buffers(VulkanContext& init, RenderData& data) {
 }
 
 int create_sync_objects(VulkanContext& init, RenderData& data) {
-	data.available_semaphores.resize(MAX_FRAMES_IN_FLIGHT);
-	data.finished_semaphore.resize(MAX_FRAMES_IN_FLIGHT);
-	data.in_flight_fences.resize(MAX_FRAMES_IN_FLIGHT);
+	data.available_semaphores.resize(init.MAX_FRAMES_IN_FLIGHT);
+	data.finished_semaphore.resize(init.MAX_FRAMES_IN_FLIGHT);
+	data.in_flight_fences.resize(init.MAX_FRAMES_IN_FLIGHT);
 	data.image_in_flight.resize(init.swapchain.image_count, VK_NULL_HANDLE);
 
 	VkSemaphoreCreateInfo semaphore_info = {};
@@ -280,7 +259,7 @@ int create_sync_objects(VulkanContext& init, RenderData& data) {
 	fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
 	fence_info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+	for (size_t i = 0; i < init.MAX_FRAMES_IN_FLIGHT; i++) {
 		if (vkCreateSemaphore(init.device, &semaphore_info, nullptr, &data.available_semaphores[i]) != VK_SUCCESS ||
 			vkCreateSemaphore(init.device, &semaphore_info, nullptr, &data.finished_semaphore[i]) != VK_SUCCESS ||
 			vkCreateFence(init.device, &fence_info, nullptr, &data.in_flight_fences[i]) != VK_SUCCESS) {
@@ -293,7 +272,6 @@ int create_sync_objects(VulkanContext& init, RenderData& data) {
 
 int recreate_swapchain(VulkanContext& init, RenderData& data) {
 	init.RecreateSwapchain();
-	assert(0 == create_command_buffers(init, data));
 	assert(0 == fill_command_buffers(init, data));
 	return 0;
 }
@@ -332,7 +310,7 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 	submitInfo.pWaitDstStageMask = wait_stages;
 
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &data.command_buffers[image_index];
+	submitInfo.pCommandBuffers = &init.commandBuffers[image_index];
 
 	VkSemaphore signal_semaphores[] = { data.finished_semaphore[data.current_frame] };
 	submitInfo.signalSemaphoreCount = 1;
@@ -366,12 +344,12 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 		return -1;
 	}
 
-	data.current_frame = (data.current_frame + 1) % MAX_FRAMES_IN_FLIGHT;
+	data.current_frame = (data.current_frame + 1) % init.MAX_FRAMES_IN_FLIGHT;
 	return 0;
 }
 
 void cleanup(VulkanContext& init, RenderData& data) {
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+	for (size_t i = 0; i < init.MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(init.device, data.finished_semaphore[i], nullptr);
 		vkDestroySemaphore(init.device, data.available_semaphores[i], nullptr);
 		vkDestroyFence(init.device, data.in_flight_fences[i], nullptr);
@@ -388,7 +366,6 @@ int main() {
 	VulkanContext init(win);
 	RenderData render_data;
 
-	assert(0 == create_command_buffers(init, render_data));
 	assert(0 == create_sync_objects(init, render_data));
 	assert(0 == create_graphics_pipeline(init, render_data));
 	assert(0 == fill_command_buffers(init, render_data));
