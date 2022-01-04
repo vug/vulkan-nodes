@@ -175,6 +175,17 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	dynamic_info.dynamicStateCount = static_cast<uint32_t> (dynamic_states.size());
 	dynamic_info.pDynamicStates = dynamic_states.data();
 
+	VkPipelineDepthStencilStateCreateInfo depthStencilInfo{};
+	depthStencilInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencilInfo.pNext = nullptr;
+	depthStencilInfo.depthTestEnable = VK_TRUE;
+	depthStencilInfo.depthWriteEnable = VK_TRUE;
+	depthStencilInfo.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+	depthStencilInfo.depthBoundsTestEnable = VK_FALSE;
+	depthStencilInfo.minDepthBounds = 0.0f; // Optional
+	depthStencilInfo.maxDepthBounds = 1.0f; // Optional
+	depthStencilInfo.stencilTestEnable = VK_FALSE;
+
 	VkGraphicsPipelineCreateInfo pipeline_info = {};
 	pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	pipeline_info.stageCount = 2;
@@ -184,6 +195,7 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	pipeline_info.pViewportState = &viewport_state;
 	pipeline_info.pRasterizationState = &rasterizer;
 	pipeline_info.pMultisampleState = &multisampling;
+	pipeline_info.pDepthStencilState = &depthStencilInfo;
 	pipeline_info.pColorBlendState = &color_blending;
 	pipeline_info.pDynamicState = &dynamic_info;
 	pipeline_info.layout = data.pipeline_layout;
@@ -202,20 +214,86 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	return 0;
 }
 
+static uint32_t GetMemoryType(VkPhysicalDeviceMemoryProperties memoryProperties, uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr)
+{
+	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
+	{
+		if ((typeBits & 1) == 1)
+		{
+			if ((memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
+			{
+				if (memTypeFound)
+				{
+					*memTypeFound = true;
+				}
+				return i;
+			}
+		}
+		typeBits >>= 1;
+	}
+
+	if (memTypeFound)
+	{
+		*memTypeFound = false;
+		return 0;
+	}
+	else
+	{
+		throw std::runtime_error("Could not find a matching memory type");
+	}
+}
+
 int create_framebuffers(VulkanContext& init, RenderData& data) {
 	data.swapchain_images = init.swapchain.get_images().value();
 	data.swapchain_image_views = init.swapchain.get_image_views().value();
 
+	VkImageCreateInfo depthImageInfo = {};
+	depthImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	depthImageInfo.pNext = nullptr;
+	depthImageInfo.imageType = VK_IMAGE_TYPE_2D;
+	depthImageInfo.format = init.surfaceInfo.depthFormat;
+	depthImageInfo.extent = { init.swapchain.extent.width, init.swapchain.extent.height, 1u }; // Depth extent is 3D
+	depthImageInfo.mipLevels = 1;
+	depthImageInfo.arrayLayers = 1;
+	depthImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+	depthImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+	depthImageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+
+	VkMemoryAllocateInfo memAlloc = {};
+	memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	assert(vkCreateImage(init.device, &depthImageInfo, nullptr, &init.surfaceInfo.depthImage) == VK_SUCCESS);
+	VkMemoryRequirements memReqs;
+	vkGetImageMemoryRequirements(init.device, init.surfaceInfo.depthImage, &memReqs);
+	memAlloc.allocationSize = memReqs.size;
+	memAlloc.memoryTypeIndex = GetMemoryType(init.device.physical_device.memory_properties, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	assert(vkAllocateMemory(init.device, &memAlloc, nullptr, &init.surfaceInfo.depthMemory) == VK_SUCCESS);
+	assert(vkBindImageMemory(init.device, init.surfaceInfo.depthImage, init.surfaceInfo.depthMemory, 0) == VK_SUCCESS);
+
+	VkImageViewCreateInfo depthImageViewInfo = {};
+	depthImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	depthImageViewInfo.pNext = nullptr;
+	depthImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+	depthImageViewInfo.image = init.surfaceInfo.depthImage;
+	depthImageViewInfo.format = depthImageInfo.format;
+	depthImageViewInfo.subresourceRange.baseMipLevel = 0;
+	depthImageViewInfo.subresourceRange.levelCount = 1;
+	depthImageViewInfo.subresourceRange.baseArrayLayer = 0;
+	depthImageViewInfo.subresourceRange.layerCount = 1;
+	depthImageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	if (vkCreateImageView(init.device, &depthImageViewInfo, nullptr, &init.surfaceInfo.depthImageView) != VK_SUCCESS) {
+		exit(EXIT_FAILURE);
+	}
+
 	data.framebuffers.resize(data.swapchain_image_views.size());
 
 	for (size_t i = 0; i < data.swapchain_image_views.size(); i++) {
-		VkImageView attachments[] = { data.swapchain_image_views[i] };
+		std::vector<VkImageView> attachments = { data.swapchain_image_views[i], init.surfaceInfo.depthImageView };
 
 		VkFramebufferCreateInfo framebuffer_info = {};
 		framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebuffer_info.renderPass = init.surfaceInfo.renderPass;
-		framebuffer_info.attachmentCount = 1;
-		framebuffer_info.pAttachments = attachments;
+		framebuffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebuffer_info.pAttachments = attachments.data();
 		framebuffer_info.width = init.swapchain.extent.width;
 		framebuffer_info.height = init.swapchain.extent.height;
 		framebuffer_info.layers = 1;
@@ -264,15 +342,19 @@ int fill_command_buffers(VulkanContext& init, RenderData& data) {
 			return -1; // failed to begin recording command buffer
 		}
 
+		std::vector<VkClearValue> clearValues(2);
+		clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+		clearValues[1].depthStencil = { 1.0f, 0 };
+
+
 		VkRenderPassBeginInfo render_pass_info = {};
 		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 		render_pass_info.renderPass = init.surfaceInfo.renderPass;
 		render_pass_info.framebuffer = data.framebuffers[i];
 		render_pass_info.renderArea.offset = { 0, 0 };
 		render_pass_info.renderArea.extent = init.swapchain.extent;
-		VkClearValue clearColor{ { { 0.0f, 0.0f, 0.0f, 1.0f } } };
-		render_pass_info.clearValueCount = 1;
-		render_pass_info.pClearValues = &clearColor;
+		render_pass_info.clearValueCount = static_cast<uint32_t>(clearValues.size());
+		render_pass_info.pClearValues = clearValues.data();
 
 		VkViewport viewport = {};
 		viewport.x = 0.0f;

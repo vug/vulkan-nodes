@@ -30,6 +30,10 @@ public:
 public:
 	struct SurfaceInfo {
 		VkRenderPass renderPass;
+		VkFormat depthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
+		VkImage depthImage;
+		VkDeviceMemory depthMemory;
+		VkImageView depthImageView;
 	};
 public:
 	const Window& win;
