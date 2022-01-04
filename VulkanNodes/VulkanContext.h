@@ -37,11 +37,9 @@ public:
 		VkDeviceMemory memory = VK_NULL_HANDLE;
 		VkImageView imageView = VK_NULL_HANDLE;
 	};
+
 	FramebufferAttachment CreateDepthAttachment();
-	struct SurfaceInfo {
-		VkRenderPass renderPass = VK_NULL_HANDLE;
-		FramebufferAttachment depthAttachment;
-	};
+	std::vector<VkFramebuffer> CreateFramebuffers();
 public:
 	const Window& win;
 	vkb::Instance instance;
@@ -51,12 +49,13 @@ public:
 	VkQueue present_queue;
 	vkb::Swapchain swapchain;
 	SwapchainData swapchainData;
-	VkFormat depthFormat;
-	SurfaceInfo surfaceInfo = {};
+	VkFormat surfaceDepthFormat;
+	VkRenderPass surfaceRenderPass;
+	FramebufferAttachment surfaceDepthAttachment;
+	std::vector<VkFramebuffer> surfaceFramebuffers;
 private:
 	vkb::Instance InitInstance();
 	VkSurfaceKHR InitSurface();
 	vkb::Device InitDevice();
-	SurfaceInfo InitSurfaceInfo();
 	VkRenderPass CreateSurfaceRenderPass();
 };

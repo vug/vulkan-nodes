@@ -10,8 +10,6 @@
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 struct RenderData {
-	std::vector<VkFramebuffer> framebuffers;
-
 	VkPipelineLayout pipeline_layout = {};
 	VkPipeline graphics_pipeline = {};
 
@@ -184,7 +182,7 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	pipeline_info.pColorBlendState = &color_blending;
 	pipeline_info.pDynamicState = &dynamic_info;
 	pipeline_info.layout = data.pipeline_layout;
-	pipeline_info.renderPass = init.surfaceInfo.renderPass;
+	pipeline_info.renderPass = init.surfaceRenderPass;
 	pipeline_info.subpass = 0;
 	pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
 
@@ -196,29 +194,6 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 
 	vkDestroyShaderModule(init.device, frag_module, nullptr);
 	vkDestroyShaderModule(init.device, vert_module, nullptr);
-	return 0;
-}
-
-int create_framebuffers(VulkanContext& init, RenderData& data) {
-	init.surfaceInfo.depthAttachment = init.CreateDepthAttachment();
-	data.framebuffers.resize(init.swapchainData.imageViews.size());
-
-	for (size_t i = 0; i < init.swapchainData.imageViews.size(); i++) {
-		std::vector<VkImageView> attachments = { init.swapchainData.imageViews[i], init.surfaceInfo.depthAttachment.imageView };
-
-		VkFramebufferCreateInfo framebuffer_info = {};
-		framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_info.renderPass = init.surfaceInfo.renderPass;
-		framebuffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());
-		framebuffer_info.pAttachments = attachments.data();
-		framebuffer_info.width = init.swapchain.extent.width;
-		framebuffer_info.height = init.swapchain.extent.height;
-		framebuffer_info.layers = 1;
-
-		if (vkCreateFramebuffer(init.device, &framebuffer_info, nullptr, &data.framebuffers[i]) != VK_SUCCESS) {
-			return -1; // failed to create framebuffer
-		}
-	}
 	return 0;
 }
 
@@ -235,7 +210,8 @@ int create_command_pool(VulkanContext& init, RenderData& data) {
 }
 
 int create_command_buffers(VulkanContext& init, RenderData& data) {
-	data.command_buffers.resize(data.framebuffers.size());
+	//data.command_buffers.resize(init.surfaceInfo.framebuffers.size());
+	data.command_buffers.resize(3);
 
 	VkCommandBufferAllocateInfo allocInfo = {};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -266,8 +242,8 @@ int fill_command_buffers(VulkanContext& init, RenderData& data) {
 
 		VkRenderPassBeginInfo render_pass_info = {};
 		render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-		render_pass_info.renderPass = init.surfaceInfo.renderPass;
-		render_pass_info.framebuffer = data.framebuffers[i];
+		render_pass_info.renderPass = init.surfaceRenderPass;
+		render_pass_info.framebuffer = init.surfaceFramebuffers[i];
 		render_pass_info.renderArea.offset = { 0, 0 };
 		render_pass_info.renderArea.extent = init.swapchain.extent;
 		render_pass_info.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -333,12 +309,12 @@ int recreate_swapchain(VulkanContext& init, RenderData& data) {
 
 	vkDestroyCommandPool(init.device, data.command_pool, nullptr);
 
-	for (auto framebuffer : data.framebuffers) {
+	for (auto framebuffer : init.surfaceFramebuffers) {
 		vkDestroyFramebuffer(init.device, framebuffer, nullptr);
 	}
 
 	init.RecreateSwapchain();
-	assert(0 == create_framebuffers(init, data));
+	init.surfaceFramebuffers = init.CreateFramebuffers();
 	assert(0 == create_command_pool(init, data));
 	assert(0 == create_command_buffers(init, data));
 	assert(0 == fill_command_buffers(init, data));
@@ -426,10 +402,6 @@ void cleanup(VulkanContext& init, RenderData& data) {
 
 	vkDestroyCommandPool(init.device, data.command_pool, nullptr);
 
-	for (auto framebuffer : data.framebuffers) {
-		vkDestroyFramebuffer(init.device, framebuffer, nullptr);
-	}
-
 	vkDestroyPipeline(init.device, data.graphics_pipeline, nullptr);
 	vkDestroyPipelineLayout(init.device, data.pipeline_layout, nullptr);
 }
@@ -441,7 +413,6 @@ int main() {
 	VulkanContext init(win);
 	RenderData render_data;
 
-	assert(0 == create_framebuffers(init, render_data));
 	assert(0 == create_command_pool(init, render_data));
 	assert(0 == create_command_buffers(init, render_data));
 	assert(0 == create_sync_objects(init, render_data));

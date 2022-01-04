@@ -35,8 +35,10 @@ VulkanContext::VulkanContext(const Window& win)
 	// vkb::Swapchain's get_images() and _views methods are meant to be only called once after Swapchain is created
 	// It's a confusing API, so we have to make sure to update swapchainData any time we recreate swapchain too
 	swapchainData({ swapchain.get_images().value(), swapchain.get_image_views().value() }),
-    depthFormat(VK_FORMAT_D24_UNORM_S8_UINT),
-	surfaceInfo(InitSurfaceInfo()) {}
+    surfaceDepthFormat(VK_FORMAT_D24_UNORM_S8_UINT),
+	surfaceRenderPass(CreateSurfaceRenderPass()),
+	surfaceDepthAttachment(CreateDepthAttachment()),
+	surfaceFramebuffers(CreateFramebuffers()) {}
 
 vkb::Instance VulkanContext::InitInstance() {
 	vkb::InstanceBuilder instanceBuilder = vkb::InstanceBuilder()
@@ -60,13 +62,34 @@ vkb::Device VulkanContext::InitDevice() {
 	return vkb::detail::GetResult(vkb::DeviceBuilder(physical_device).build());
 }
 
-VulkanContext::SurfaceInfo VulkanContext::InitSurfaceInfo() {
-	SurfaceInfo surfaceInfo;
-	surfaceInfo.renderPass = CreateSurfaceRenderPass();
-	// While app is being initialized a resize callback is called which calls CreateDepthAttachment anyway
-	// if we call it now, it'll create lingering unused FramebufferAttachment resources
-	//surfaceInfo.depthAttachment = CreateDepthAttachment();
-	return surfaceInfo;
+std::vector<VkFramebuffer> VulkanContext::CreateFramebuffers() {
+	std::vector<VkFramebuffer> framebuffers;
+
+	vkDestroyImage(device, surfaceDepthAttachment.image, nullptr);
+	vkDestroyImageView(device, surfaceDepthAttachment.imageView, nullptr);
+	vkFreeMemory(device, surfaceDepthAttachment.memory, nullptr);
+
+	surfaceDepthAttachment = CreateDepthAttachment();
+	framebuffers.resize(swapchainData.imageViews.size());
+
+	for (size_t i = 0; i < swapchainData.imageViews.size(); i++) {
+		std::vector<VkImageView> attachments = { swapchainData.imageViews[i], surfaceDepthAttachment.imageView };
+
+		VkFramebufferCreateInfo framebuffer_info = {};
+		framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebuffer_info.renderPass = surfaceRenderPass;
+		framebuffer_info.attachmentCount = static_cast<uint32_t>(attachments.size());
+		framebuffer_info.pAttachments = attachments.data();
+		framebuffer_info.width = swapchain.extent.width;
+		framebuffer_info.height = swapchain.extent.height;
+		framebuffer_info.layers = 1;
+
+		if (vkCreateFramebuffer(device, &framebuffer_info, nullptr, &framebuffers[i]) != VK_SUCCESS) {
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	return framebuffers;
 }
 
 VkRenderPass VulkanContext::CreateSurfaceRenderPass() {
@@ -85,7 +108,7 @@ VkRenderPass VulkanContext::CreateSurfaceRenderPass() {
     colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
     VkAttachmentDescription depthAttachment = {};
-    depthAttachment.format = depthFormat;
+    depthAttachment.format = surfaceDepthFormat;
     depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -128,7 +151,7 @@ VulkanContext::FramebufferAttachment VulkanContext::CreateDepthAttachment() {
 	depthImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	depthImageInfo.pNext = nullptr;
 	depthImageInfo.imageType = VK_IMAGE_TYPE_2D;
-	depthImageInfo.format = depthFormat;
+	depthImageInfo.format = surfaceDepthFormat;
 	depthImageInfo.extent = { swapchain.extent.width, swapchain.extent.height, 1u };
 	depthImageInfo.mipLevels = 1;
 	depthImageInfo.arrayLayers = 1;
@@ -165,14 +188,18 @@ VulkanContext::FramebufferAttachment VulkanContext::CreateDepthAttachment() {
 }
 
 VulkanContext::~VulkanContext() {
+	for (auto& framebuffer : surfaceFramebuffers) {
+		vkDestroyFramebuffer(device, framebuffer, nullptr);
+	}
+
 	swapchain.destroy_image_views(swapchainData.imageViews);
 	vkb::destroy_swapchain(swapchain);
 
-	vkFreeMemory(device, surfaceInfo.depthAttachment.memory, nullptr);
-	vkDestroyImageView(device, surfaceInfo.depthAttachment.imageView, nullptr);
-	vkDestroyImage(device, surfaceInfo.depthAttachment.image, nullptr);
+	vkFreeMemory(device, surfaceDepthAttachment.memory, nullptr);
+	vkDestroyImageView(device, surfaceDepthAttachment.imageView, nullptr);
+	vkDestroyImage(device, surfaceDepthAttachment.image, nullptr);
 
-	vkDestroyRenderPass(device, surfaceInfo.renderPass, nullptr);
+	vkDestroyRenderPass(device, surfaceRenderPass, nullptr);
 
 	vkb::destroy_device(device);
 	vkb::destroy_surface(instance, surface);
@@ -181,9 +208,6 @@ VulkanContext::~VulkanContext() {
 
 void VulkanContext::RecreateSwapchain() {
 	swapchain.destroy_image_views(swapchainData.imageViews);
-	vkDestroyImage(device, surfaceInfo.depthAttachment.image, nullptr);
-	vkDestroyImageView(device, surfaceInfo.depthAttachment.imageView, nullptr);
-	vkFreeMemory(device, surfaceInfo.depthAttachment.memory, nullptr);
 
 	auto oldSwapchain = swapchain;
 	swapchain = vkb::detail::GetResult(
