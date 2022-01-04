@@ -28,12 +28,15 @@ public:
 
 	void RecreateSwapchain();
 public:
+	struct FramebufferAttachment {
+		VkImage image = VK_NULL_HANDLE;
+		VkDeviceMemory memory = VK_NULL_HANDLE;
+		VkImageView imageView = VK_NULL_HANDLE;
+	};
+	FramebufferAttachment CreateDepthAttachment();
 	struct SurfaceInfo {
-		VkRenderPass renderPass;
-		VkFormat depthFormat = VK_FORMAT_D24_UNORM_S8_UINT;
-		VkImage depthImage;
-		VkDeviceMemory depthMemory;
-		VkImageView depthImageView;
+		VkRenderPass renderPass = VK_NULL_HANDLE;
+		FramebufferAttachment depthAttachment;
 	};
 public:
 	const Window& win;
@@ -41,7 +44,8 @@ public:
 	VkSurfaceKHR surface = {};
 	vkb::Device device;
 	vkb::Swapchain swapchain;
-	SurfaceInfo surfaceInfo;
+	VkFormat depthFormat;
+	SurfaceInfo surfaceInfo = {};
 private:
 	vkb::Instance InitInstance();
 	VkSurfaceKHR InitSurface();

@@ -214,80 +214,14 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	return 0;
 }
 
-static uint32_t GetMemoryType(VkPhysicalDeviceMemoryProperties memoryProperties, uint32_t typeBits, VkMemoryPropertyFlags properties, VkBool32* memTypeFound = nullptr)
-{
-	for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
-	{
-		if ((typeBits & 1) == 1)
-		{
-			if ((memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
-			{
-				if (memTypeFound)
-				{
-					*memTypeFound = true;
-				}
-				return i;
-			}
-		}
-		typeBits >>= 1;
-	}
-
-	if (memTypeFound)
-	{
-		*memTypeFound = false;
-		return 0;
-	}
-	else
-	{
-		throw std::runtime_error("Could not find a matching memory type");
-	}
-}
-
 int create_framebuffers(VulkanContext& init, RenderData& data) {
 	data.swapchain_images = init.swapchain.get_images().value();
 	data.swapchain_image_views = init.swapchain.get_image_views().value();
-
-	VkImageCreateInfo depthImageInfo = {};
-	depthImageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	depthImageInfo.pNext = nullptr;
-	depthImageInfo.imageType = VK_IMAGE_TYPE_2D;
-	depthImageInfo.format = init.surfaceInfo.depthFormat;
-	depthImageInfo.extent = { init.swapchain.extent.width, init.swapchain.extent.height, 1u }; // Depth extent is 3D
-	depthImageInfo.mipLevels = 1;
-	depthImageInfo.arrayLayers = 1;
-	depthImageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
-	depthImageInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
-	depthImageInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
-
-	VkMemoryAllocateInfo memAlloc = {};
-	memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	assert(vkCreateImage(init.device, &depthImageInfo, nullptr, &init.surfaceInfo.depthImage) == VK_SUCCESS);
-	VkMemoryRequirements memReqs;
-	vkGetImageMemoryRequirements(init.device, init.surfaceInfo.depthImage, &memReqs);
-	memAlloc.allocationSize = memReqs.size;
-	memAlloc.memoryTypeIndex = GetMemoryType(init.device.physical_device.memory_properties, memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	assert(vkAllocateMemory(init.device, &memAlloc, nullptr, &init.surfaceInfo.depthMemory) == VK_SUCCESS);
-	assert(vkBindImageMemory(init.device, init.surfaceInfo.depthImage, init.surfaceInfo.depthMemory, 0) == VK_SUCCESS);
-
-	VkImageViewCreateInfo depthImageViewInfo = {};
-	depthImageViewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	depthImageViewInfo.pNext = nullptr;
-	depthImageViewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	depthImageViewInfo.image = init.surfaceInfo.depthImage;
-	depthImageViewInfo.format = depthImageInfo.format;
-	depthImageViewInfo.subresourceRange.baseMipLevel = 0;
-	depthImageViewInfo.subresourceRange.levelCount = 1;
-	depthImageViewInfo.subresourceRange.baseArrayLayer = 0;
-	depthImageViewInfo.subresourceRange.layerCount = 1;
-	depthImageViewInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-	if (vkCreateImageView(init.device, &depthImageViewInfo, nullptr, &init.surfaceInfo.depthImageView) != VK_SUCCESS) {
-		exit(EXIT_FAILURE);
-	}
-
+	init.surfaceInfo.depthAttachment = init.CreateDepthAttachment();
 	data.framebuffers.resize(data.swapchain_image_views.size());
 
 	for (size_t i = 0; i < data.swapchain_image_views.size(); i++) {
-		std::vector<VkImageView> attachments = { data.swapchain_image_views[i], init.surfaceInfo.depthImageView };
+		std::vector<VkImageView> attachments = { data.swapchain_image_views[i], init.surfaceInfo.depthAttachment.imageView };
 
 		VkFramebufferCreateInfo framebuffer_info = {};
 		framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -421,6 +355,9 @@ int recreate_swapchain(VulkanContext& init, RenderData& data) {
 	}
 
 	init.swapchain.destroy_image_views(data.swapchain_image_views);
+	vkDestroyImage(init.device, init.surfaceInfo.depthAttachment.image, nullptr);
+	vkDestroyImageView(init.device, init.surfaceInfo.depthAttachment.imageView, nullptr);
+	vkFreeMemory(init.device, init.surfaceInfo.depthAttachment.memory, nullptr);
 
 	init.RecreateSwapchain();
 	assert(0 == create_framebuffers(init, data));
@@ -517,11 +454,8 @@ void cleanup(VulkanContext& init, RenderData& data) {
 
 	vkDestroyPipeline(init.device, data.graphics_pipeline, nullptr);
 	vkDestroyPipelineLayout(init.device, data.pipeline_layout, nullptr);
-	vkDestroyRenderPass(init.device, init.surfaceInfo.renderPass, nullptr);
 
 	init.swapchain.destroy_image_views(data.swapchain_image_views);
-
-	vkb::destroy_swapchain(init.swapchain);
 }
 
 
