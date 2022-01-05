@@ -2,6 +2,9 @@
 
 #include "Window.h"
 #include "VulkanContext.h"
+#include "ImGuiHelper.h"
+
+#include <imgui.h>
 
 #include <cassert>
 #include <iostream>
@@ -187,7 +190,7 @@ int create_graphics_pipeline(VulkanContext& init, RenderData& data) {
 	return 0;
 }
 
-int fillCommandBuffer(VulkanContext& init, RenderData& data, int i) {
+int fillCommandBuffer(VulkanContext& init, RenderData& data, int i, ImGuiHelper& imGuiHelper) {
 	assert(vkResetCommandBuffer(init.commandBuffer, 0) == VK_SUCCESS);
 
 	VkCommandBufferBeginInfo begin_info = {};
@@ -231,6 +234,8 @@ int fillCommandBuffer(VulkanContext& init, RenderData& data, int i) {
 
 	vkCmdDraw(init.commandBuffer, 3, 1, 0, 0);
 
+	imGuiHelper.OnRender();
+
 	vkCmdEndRenderPass(init.commandBuffer);
 
 	if (vkEndCommandBuffer(init.commandBuffer) != VK_SUCCESS) {
@@ -241,7 +246,7 @@ int fillCommandBuffer(VulkanContext& init, RenderData& data, int i) {
 	return 0;
 }
 
-int draw_frame(VulkanContext& init, RenderData& data) {
+int draw_frame(VulkanContext& init, RenderData& data, ImGuiHelper& imGuiHelper) {
 	vkWaitForFences(init.device, 1, &init.sync.in_flight_fences[data.current_frame], VK_TRUE, UINT64_MAX);
 
 	uint32_t image_index = 0;
@@ -266,7 +271,9 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 	}
 	init.sync.image_in_flight[image_index] = init.sync.in_flight_fences[data.current_frame];
 
-	assert(0 == fillCommandBuffer(init, data, image_index));
+	//
+	assert(0 == fillCommandBuffer(init, data, image_index, imGuiHelper));
+	//
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -315,10 +322,11 @@ int draw_frame(VulkanContext& init, RenderData& data) {
 }
 
 void cleanup(VulkanContext& init, RenderData& data) {
+	vkDeviceWaitIdle(init.device);
+
 	vkDestroyPipeline(init.device, data.graphics_pipeline, nullptr);
 	vkDestroyPipelineLayout(init.device, data.pipeline_layout, nullptr);
 }
-
 
 int main() {
 	Window win;
@@ -328,13 +336,17 @@ int main() {
 
 	assert(0 == create_graphics_pipeline(init, render_data));
 
+	ImGuiHelper imGuiHelper(init);
+
 	while (!win.ShouldClose()) {
 		win.PollEvents();
-		int res = draw_frame(init, render_data);
-		if (res != 0) {
-			std::cout << "failed to draw frame \n";
-			return -1;
-		}
+
+		imGuiHelper.Begin();
+		static bool showDemo = true;
+		ImGui::ShowDemoWindow(&showDemo);
+		imGuiHelper.End();
+
+		int res = draw_frame(init, render_data, imGuiHelper);
 	}
 	vkDeviceWaitIdle(init.device);
 	cleanup(init, render_data);
