@@ -16,3 +16,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(fetch_vk_bootstrap)
 target_link_libraries(VulkanNodes PRIVATE vk-bootstrap::vk-bootstrap)
+
+find_package(imgui CONFIG REQUIRED)
+target_link_libraries(VulkanNodes PRIVATE imgui::imgui)
