@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required (VERSION 3.8)
 
-add_executable (VulkanNodes "VulkanNodes.cpp" "VulkanNodes.h" "Window.h" "Window.cpp" "VulkanContext.h" "VulkanContext.cpp")
+add_executable (VulkanNodes "VulkanNodes.cpp" "VulkanNodes.h" "Window.h" "Window.cpp" "VulkanContext.h" "VulkanContext.cpp" "ImGuiHelper.h" "ImGuiHelper.cpp")
 
 find_package(glfw3 CONFIG REQUIRED)
 target_link_libraries(VulkanNodes PRIVATE glfw)
