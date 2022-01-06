@@ -27,7 +27,7 @@ ImGuiHelper::ImGuiHelper(const VulkanContext& init)
 		info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 		info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		info.maxSets = 1000;
-		info.poolSizeCount = std::size(pool_sizes);
+		info.poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes));
 		info.pPoolSizes = pool_sizes;
 
 		assert(vkCreateDescriptorPool(init.device, &info, nullptr, &imguiPool) == VK_SUCCESS);
