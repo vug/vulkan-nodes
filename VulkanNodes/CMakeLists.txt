@@ -19,3 +19,8 @@ target_link_libraries(VulkanNodes PRIVATE vk-bootstrap::vk-bootstrap)
 
 find_package(imgui CONFIG REQUIRED)
 target_link_libraries(VulkanNodes PRIVATE imgui::imgui)
+
+add_custom_target(copy_assets
+    COMMAND ${CMAKE_COMMAND} -E copy_directory ${CMAKE_CURRENT_LIST_DIR}/shaders ${CMAKE_CURRENT_BINARY_DIR}/shaders
+)
+add_dependencies(VulkanNodes copy_assets)
