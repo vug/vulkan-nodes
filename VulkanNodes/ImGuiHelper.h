@@ -9,7 +9,7 @@ public:
 	void Begin();
 	void End();
 
-	void OnRender();
+	void AddDrawCalls(const VkCommandBuffer& cmdBuf);
 private:
 	const VulkanContext& vc;
 	VkDescriptorPool imguiPool;

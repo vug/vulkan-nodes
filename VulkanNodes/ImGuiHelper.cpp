@@ -94,6 +94,6 @@ void ImGuiHelper::End() {
 	ImGui::Render();
 }
 
-void ImGuiHelper::OnRender() {
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vc.commandBuffer);
+void ImGuiHelper::AddDrawCalls(const VkCommandBuffer& cmdBuf) {
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuf);
 }

@@ -7,21 +7,45 @@
 #include <imgui.h>
 
 #include <cassert>
+#include <functional>
 
 struct RenderData {
-	VkPipeline graphics_pipeline = {};
-	size_t current_frame = 0;
+	size_t currentInFlightFrame = 0;
 };
 
-int fillCommandBuffer(VulkanContext& vc, RenderData& data, int i, ImGuiHelper& imGuiHelper) {
+void DrawFrame(VulkanContext& vc, RenderData& data, std::function<void(const VkCommandBuffer&)> cmdBufFillingFunc) {
+	vkWaitForFences(vc.device, 1, &vc.sync.in_flight_fences[data.currentInFlightFrame], VK_TRUE, UINT64_MAX);
+
+	uint32_t image_index = 0;
+	VkResult result = vkAcquireNextImageKHR(vc.device,
+		vc.swapchain,
+		UINT64_MAX,
+		vc.sync.available_semaphores[data.currentInFlightFrame],
+		VK_NULL_HANDLE,
+		&image_index);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		vc.RecreateSwapchain();
+		return;
+	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		std::cout << "failed to acquire swapchain image. Error " << result << "\n";
+		exit(EXIT_FAILURE);
+	}
+
+	if (vc.sync.image_in_flight[image_index] != VK_NULL_HANDLE) {
+		vkWaitForFences(vc.device, 1, &vc.sync.image_in_flight[image_index], VK_TRUE, UINT64_MAX);
+	}
+	vc.sync.image_in_flight[image_index] = vc.sync.in_flight_fences[data.currentInFlightFrame];
+
+
+	// Rest cmdBuf, prepare RenderPass Begin, fill draw commands, end renderpass
 	assert(vkResetCommandBuffer(vc.commandBuffer, 0) == VK_SUCCESS);
 
 	VkCommandBufferBeginInfo begin_info = {};
 	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	if (vkBeginCommandBuffer(vc.commandBuffer, &begin_info) != VK_SUCCESS) {
-		return -1; // failed to begin recording command buffer
-	}
+	assert(vkBeginCommandBuffer(vc.commandBuffer, &begin_info) == VK_SUCCESS);
 
 	std::vector<VkClearValue> clearValues(2);
 	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
@@ -30,7 +54,7 @@ int fillCommandBuffer(VulkanContext& vc, RenderData& data, int i, ImGuiHelper& i
 	VkRenderPassBeginInfo render_pass_info = {};
 	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	render_pass_info.renderPass = vc.surfaceRenderPass;
-	render_pass_info.framebuffer = vc.surfaceFramebuffers[i];
+	render_pass_info.framebuffer = vc.surfaceFramebuffers[image_index];
 	render_pass_info.renderArea.offset = { 0, 0 };
 	render_pass_info.renderArea.extent = vc.swapchain.extent;
 	render_pass_info.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -53,70 +77,30 @@ int fillCommandBuffer(VulkanContext& vc, RenderData& data, int i, ImGuiHelper& i
 
 	vkCmdBeginRenderPass(vc.commandBuffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(vc.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, data.graphics_pipeline);
-
-	vkCmdDraw(vc.commandBuffer, 3, 1, 0, 0);
-
-	imGuiHelper.OnRender();
+	cmdBufFillingFunc(vc.commandBuffer);
 
 	vkCmdEndRenderPass(vc.commandBuffer);
 
-	if (vkEndCommandBuffer(vc.commandBuffer) != VK_SUCCESS) {
-		std::cout << "failed to record command buffer\n";
-		return -1; // failed to record command buffer!
-	}
-
-	return 0;
-}
-
-int draw_frame(VulkanContext& vc, RenderData& data, ImGuiHelper& imGuiHelper) {
-	vkWaitForFences(vc.device, 1, &vc.sync.in_flight_fences[data.current_frame], VK_TRUE, UINT64_MAX);
-
-	uint32_t image_index = 0;
-	VkResult result = vkAcquireNextImageKHR(vc.device,
-		vc.swapchain,
-		UINT64_MAX,
-		vc.sync.available_semaphores[data.current_frame],
-		VK_NULL_HANDLE,
-		&image_index);
-
-	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-		vc.RecreateSwapchain();
-		return 0;
-	}
-	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
-		std::cout << "failed to acquire swapchain image. Error " << result << "\n";
-		return -1;
-	}
-
-	if (vc.sync.image_in_flight[image_index] != VK_NULL_HANDLE) {
-		vkWaitForFences(vc.device, 1, &vc.sync.image_in_flight[image_index], VK_TRUE, UINT64_MAX);
-	}
-	vc.sync.image_in_flight[image_index] = vc.sync.in_flight_fences[data.current_frame];
-
+	assert(vkEndCommandBuffer(vc.commandBuffer) == VK_SUCCESS);
 	//
-	assert(0 == fillCommandBuffer(vc, data, image_index, imGuiHelper));
-	//
+
 
 	VkSubmitInfo submitInfo = {};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	VkSemaphore wait_semaphores[] = { vc.sync.available_semaphores[data.current_frame] };
+	VkSemaphore wait_semaphores[] = { vc.sync.available_semaphores[data.currentInFlightFrame] };
 	VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = wait_semaphores;
 	submitInfo.pWaitDstStageMask = wait_stages;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &vc.commandBuffer;
-	VkSemaphore signal_semaphores[] = { vc.sync.finished_semaphore[data.current_frame] };
+	VkSemaphore signal_semaphores[] = { vc.sync.finished_semaphore[data.currentInFlightFrame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signal_semaphores;
 
-	vkResetFences(vc.device, 1, &vc.sync.in_flight_fences[data.current_frame]);
+	vkResetFences(vc.device, 1, &vc.sync.in_flight_fences[data.currentInFlightFrame]);
 
-	if (vkQueueSubmit(vc.graphics_queue, 1, &submitInfo, vc.sync.in_flight_fences[data.current_frame]) != VK_SUCCESS) {
-		std::cout << "failed to submit draw command buffer\n";
-		return -1; //"failed to submit draw command buffer
-	}
+	assert(vkQueueSubmit(vc.graphics_queue, 1, &submitInfo, vc.sync.in_flight_fences[data.currentInFlightFrame]) == VK_SUCCESS);
 
 	VkPresentInfoKHR present_info = {};
 	present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -133,15 +117,14 @@ int draw_frame(VulkanContext& vc, RenderData& data, ImGuiHelper& imGuiHelper) {
 	result = vkQueuePresentKHR(vc.present_queue, &present_info);
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
 		vc.RecreateSwapchain();
-		return 0;
+		return;
 	}
 	else if (result != VK_SUCCESS) {
 		std::cout << "failed to present swapchain image\n";
-		return -1;
+		exit(EXIT_FAILURE);
 	}
 
-	data.current_frame = (data.current_frame + 1) % vc.MAX_FRAMES_IN_FLIGHT;
-	return 0;
+	data.currentInFlightFrame = (data.currentInFlightFrame + 1) % vc.MAX_FRAMES_IN_FLIGHT;
 }
 
 int main() {
@@ -166,7 +149,6 @@ int main() {
 	VkPipeline pipeline = vc.CreateSurfaceCompatiblePipeline(vert, frag, pipelineLayout);
 	vkDestroyShaderModule(vc.device, vert, nullptr);
 	vkDestroyShaderModule(vc.device, frag, nullptr);
-	render_data.graphics_pipeline = pipeline;
 
 	ImGuiHelper imGuiHelper(vc);
 
@@ -178,7 +160,12 @@ int main() {
 		ImGui::ShowDemoWindow(&showDemo);
 		imGuiHelper.End();
 
-		int res = draw_frame(vc, render_data, imGuiHelper);
+		auto func = [&](const VkCommandBuffer& cmdBuf) {
+			vkCmdBindPipeline(vc.commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+			vkCmdDraw(vc.commandBuffer, 3, 1, 0, 0);
+			imGuiHelper.AddDrawCalls(vc.commandBuffer);
+		};
+		DrawFrame(vc, render_data, func);
 	}
 
 	// Cleanup
