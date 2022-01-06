@@ -5,8 +5,8 @@
 
 #include <cassert>
 
-ImGuiHelper::ImGuiHelper(const VulkanContext& init)
-	: init(init) {
+ImGuiHelper::ImGuiHelper(const VulkanContext& vc)
+	: vc(vc) {
 
 	VkDescriptorPoolSize pool_sizes[] = {
 		{ VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
@@ -30,34 +30,34 @@ ImGuiHelper::ImGuiHelper(const VulkanContext& init)
 		info.poolSizeCount = static_cast<uint32_t>(std::size(pool_sizes));
 		info.pPoolSizes = pool_sizes;
 
-		assert(vkCreateDescriptorPool(init.device, &info, nullptr, &imguiPool) == VK_SUCCESS);
+		assert(vkCreateDescriptorPool(vc.device, &info, nullptr, &imguiPool) == VK_SUCCESS);
 	}
 
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGui_ImplGlfw_InitForVulkan(init.win.GetGLFWWindow(), true);
+	ImGui_ImplGlfw_InitForVulkan(vc.win.GetGLFWWindow(), true);
 
 	ImGui_ImplVulkan_InitInfo init_info = {};
-	init_info.Instance = init.instance;
-	init_info.PhysicalDevice = init.device.physical_device;
-	init_info.Device = init.device;
+	init_info.Instance = vc.instance;
+	init_info.PhysicalDevice = vc.device.physical_device;
+	init_info.Device = vc.device;
 	//init_info.QueueFamily = device.get_queue_index(vkb::QueueType::graphics).value();
-	init_info.Queue = init.graphics_queue;
+	init_info.Queue = vc.graphics_queue;
 	//init_info.PipelineCache = g_PipelineCache;
 	init_info.DescriptorPool = imguiPool;
-	init_info.MinImageCount = static_cast<uint32_t>(init.surfaceFramebuffers.size());
-	init_info.ImageCount = static_cast<uint32_t>(init.surfaceFramebuffers.size());
+	init_info.MinImageCount = static_cast<uint32_t>(vc.surfaceFramebuffers.size());
+	init_info.ImageCount = static_cast<uint32_t>(vc.surfaceFramebuffers.size());
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	//init_info.CheckVkResultFn = check_vk_result;
-	ImGui_ImplVulkan_Init(&init_info, init.surfaceRenderPass);
+	ImGui_ImplVulkan_Init(&init_info, vc.surfaceRenderPass);
 
 	// Upload fonts
 	{
-		VkCommandPool command_pool = init.commandPool;
-		VkCommandBuffer command_buffer = init.commandBuffer;
+		VkCommandPool command_pool = vc.commandPool;
+		VkCommandBuffer command_buffer = vc.commandBuffer;
 
-		vkResetCommandPool(init.device, command_pool, 0);
+		vkResetCommandPool(vc.device, command_pool, 0);
 		VkCommandBufferBeginInfo begin_info = {};
 		begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -70,15 +70,15 @@ ImGuiHelper::ImGuiHelper(const VulkanContext& init)
 		end_info.commandBufferCount = 1;
 		end_info.pCommandBuffers = &command_buffer;
 		vkEndCommandBuffer(command_buffer);
-		vkQueueSubmit(init.graphics_queue, 1, &end_info, VK_NULL_HANDLE);
+		vkQueueSubmit(vc.graphics_queue, 1, &end_info, VK_NULL_HANDLE);
 
-		vkDeviceWaitIdle(init.device);
+		vkDeviceWaitIdle(vc.device);
 		ImGui_ImplVulkan_DestroyFontUploadObjects();
 	}
 }
 
 ImGuiHelper::~ImGuiHelper() {
-	vkDestroyDescriptorPool(init.device, imguiPool, nullptr);
+	vkDestroyDescriptorPool(vc.device, imguiPool, nullptr);
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
 	ImGui::DestroyContext();
@@ -95,5 +95,5 @@ void ImGuiHelper::End() {
 }
 
 void ImGuiHelper::OnRender() {
-	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), init.commandBuffer);
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), vc.commandBuffer);
 }

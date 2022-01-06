@@ -4,13 +4,13 @@
 
 class ImGuiHelper {
 public:
-	ImGuiHelper(const VulkanContext& init);
+	ImGuiHelper(const VulkanContext& vc);
 	~ImGuiHelper();
 	void Begin();
 	void End();
 
 	void OnRender();
 private:
-	const VulkanContext& init;
+	const VulkanContext& vc;
 	VkDescriptorPool imguiPool;
 };
