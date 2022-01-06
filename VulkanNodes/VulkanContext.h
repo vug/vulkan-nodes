@@ -27,6 +27,9 @@ public:
 	~VulkanContext();
 
 	void RecreateSwapchain();
+	static std::vector<char> ReadFile(const std::string& filename);
+	VkShaderModule CreateShaderModule(const std::vector<char>& code);
+	VkPipeline CreateSurfaceCompatiblePipeline(VkShaderModule vert, VkShaderModule frag, VkPipelineLayout layout);
 public:
 	struct SwapchainData {
 		std::vector<VkImage> images;
