@@ -437,3 +437,117 @@ VkPipeline VulkanContext::CreateSurfaceCompatiblePipeline(VkShaderModule vert, V
 		device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &graphicsPipeline) == VK_SUCCESS);
 	return graphicsPipeline;
 }
+
+void VulkanContext::DrawFrame(std::function<void(const VkCommandBuffer&)> cmdBufFillingFunc) {
+	vkWaitForFences(device, 1, &sync.in_flight_fences[currentInFlightFrame], VK_TRUE, UINT64_MAX);
+
+	uint32_t image_index = 0;
+	VkResult result = vkAcquireNextImageKHR(device,
+		swapchain,
+		UINT64_MAX,
+		sync.available_semaphores[currentInFlightFrame],
+		VK_NULL_HANDLE,
+		&image_index);
+
+	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
+		RecreateSwapchain();
+		return;
+	}
+	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		std::cout << "failed to acquire swapchain image. Error " << result << "\n";
+		exit(EXIT_FAILURE);
+	}
+
+	if (sync.image_in_flight[image_index] != VK_NULL_HANDLE) {
+		vkWaitForFences(device, 1, &sync.image_in_flight[image_index], VK_TRUE, UINT64_MAX);
+	}
+	sync.image_in_flight[image_index] = sync.in_flight_fences[currentInFlightFrame];
+
+
+	// Rest cmdBuf, prepare RenderPass Begin, fill draw commands, end renderpass
+	assert(vkResetCommandBuffer(commandBuffer, 0) == VK_SUCCESS);
+
+	VkCommandBufferBeginInfo begin_info = {};
+	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+	assert(vkBeginCommandBuffer(commandBuffer, &begin_info) == VK_SUCCESS);
+
+	std::vector<VkClearValue> clearValues(2);
+	clearValues[0].color = { 0.0f, 0.0f, 0.0f, 0.0f };
+	clearValues[1].depthStencil = { 1.0f, 0 };
+
+	VkRenderPassBeginInfo render_pass_info = {};
+	render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	render_pass_info.renderPass = surfaceRenderPass;
+	render_pass_info.framebuffer = surfaceFramebuffers[image_index];
+	render_pass_info.renderArea.offset = { 0, 0 };
+	render_pass_info.renderArea.extent = swapchain.extent;
+	render_pass_info.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	render_pass_info.pClearValues = clearValues.data();
+
+	VkViewport viewport = {};
+	viewport.x = 0.0f;
+	viewport.y = 0.0f;
+	viewport.width = (float)swapchain.extent.width;
+	viewport.height = (float)swapchain.extent.height;
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+
+	VkRect2D scissor = {};
+	scissor.offset = { 0, 0 };
+	scissor.extent = swapchain.extent;
+
+	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+	vkCmdBeginRenderPass(commandBuffer, &render_pass_info, VK_SUBPASS_CONTENTS_INLINE);
+
+	cmdBufFillingFunc(commandBuffer);
+
+	vkCmdEndRenderPass(commandBuffer);
+
+	assert(vkEndCommandBuffer(commandBuffer) == VK_SUCCESS);
+	//
+
+
+	VkSubmitInfo submitInfo = {};
+	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+	VkSemaphore wait_semaphores[] = { sync.available_semaphores[currentInFlightFrame] };
+	VkPipelineStageFlags wait_stages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	submitInfo.waitSemaphoreCount = 1;
+	submitInfo.pWaitSemaphores = wait_semaphores;
+	submitInfo.pWaitDstStageMask = wait_stages;
+	submitInfo.commandBufferCount = 1;
+	submitInfo.pCommandBuffers = &commandBuffer;
+	VkSemaphore signal_semaphores[] = { sync.finished_semaphore[currentInFlightFrame] };
+	submitInfo.signalSemaphoreCount = 1;
+	submitInfo.pSignalSemaphores = signal_semaphores;
+
+	vkResetFences(device, 1, &sync.in_flight_fences[currentInFlightFrame]);
+
+	assert(vkQueueSubmit(graphics_queue, 1, &submitInfo, sync.in_flight_fences[currentInFlightFrame]) == VK_SUCCESS);
+
+	VkPresentInfoKHR present_info = {};
+	present_info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+	present_info.waitSemaphoreCount = 1;
+	present_info.pWaitSemaphores = signal_semaphores;
+
+	VkSwapchainKHR swapChains[] = { swapchain };
+	present_info.swapchainCount = 1;
+	present_info.pSwapchains = swapChains;
+
+	present_info.pImageIndices = &image_index;
+
+	result = vkQueuePresentKHR(present_queue, &present_info);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+		RecreateSwapchain();
+		return;
+	}
+	else if (result != VK_SUCCESS) {
+		std::cout << "failed to present swapchain image\n";
+		exit(EXIT_FAILURE);
+	}
+
+	currentInFlightFrame = (currentInFlightFrame + 1) % MAX_FRAMES_IN_FLIGHT;
+}

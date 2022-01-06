@@ -6,6 +6,7 @@
 #include <VkBootstrap.h>
 
 #include <iostream>
+#include <functional>
 
 namespace vkb {
 	namespace detail {
@@ -30,6 +31,7 @@ public:
 	static std::vector<char> ReadFile(const std::string& filename);
 	VkShaderModule CreateShaderModule(const std::vector<char>& code);
 	VkPipeline CreateSurfaceCompatiblePipeline(VkShaderModule vert, VkShaderModule frag, VkPipelineLayout layout);
+	void DrawFrame(std::function<void(const VkCommandBuffer&)> cmdBufFillingFunc);
 public:
 	struct SwapchainData {
 		std::vector<VkImage> images;
@@ -64,6 +66,7 @@ public:
 	// TODO: fix the swapchain recreation issue when MAX_FRAMES_IN_FLIGHT > 1
 	const int MAX_FRAMES_IN_FLIGHT = 1;
 	Sync sync;
+	size_t currentInFlightFrame = 0;
 private:
 	vkb::Instance InitInstance();
 	VkSurfaceKHR InitSurface();
