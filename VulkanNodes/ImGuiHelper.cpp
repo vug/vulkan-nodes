@@ -2,6 +2,7 @@
 
 #include <imgui_impl_vulkan.h>
 #include <imgui_impl_glfw.h>
+#include "dependencies/imnodes.h"
 
 #include <cassert>
 
@@ -36,6 +37,7 @@ ImGuiHelper::ImGuiHelper(const VulkanContext& vc)
 
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
+	ImNodes::CreateContext();
 	ImGui_ImplGlfw_InitForVulkan(vc.win.GetGLFWWindow(), true);
 
 	ImGui_ImplVulkan_InitInfo init_info = {};
@@ -81,6 +83,7 @@ ImGuiHelper::~ImGuiHelper() {
 	vkDestroyDescriptorPool(vc.device, imguiPool, nullptr);
 	ImGui_ImplVulkan_Shutdown();
 	ImGui_ImplGlfw_Shutdown();
+	ImNodes::DestroyContext();
 	ImGui::DestroyContext();
 }
 

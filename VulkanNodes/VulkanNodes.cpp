@@ -1,12 +1,15 @@
 ﻿#include "VulkanNodes.h"
+#include "NodeEditor.h"
 
 #include "Window.h"
 #include "VulkanContext.h"
 #include "ImGuiHelper.h"
 
 #include <imgui.h>
+#include "dependencies/imnodes.h"
 
 #include <cassert>
+
 
 int main() {
 	Window win;
@@ -31,11 +34,14 @@ int main() {
 	vkDestroyShaderModule(vc.device, frag, nullptr);
 
 	ImGuiHelper imGuiHelper(vc);
-
+	NodeEditor nodeEditor;
+	
 	while (!win.ShouldClose()) {
 		win.PollEvents();
 
 		imGuiHelper.Begin();
+		nodeEditor.Draw();
+
 		static bool showDemo = true;
 		ImGui::ShowDemoWindow(&showDemo);
 		imGuiHelper.End();

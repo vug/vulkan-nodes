@@ -2,6 +2,9 @@
 
 #include <string>
 #include <vector>
+
+#include "dependencies/imnodes.h"
+
 struct Attribute {
 	int id;
 	std::string name;
@@ -25,4 +28,14 @@ struct Graph {
 	std::vector<Node> nodes;
 	std::vector<Link> links;
 	int counter = 0;
+};
+
+class NodeEditor {
+public:
+	NodeEditor();
+	void Draw();
+public:
+	Graph graph = {};
+private:
+	ImNodesEditorContext* context = nullptr;
 };
