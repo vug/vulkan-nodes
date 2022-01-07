@@ -27,6 +27,7 @@ NodeEditor::NodeEditor()
 
 void NodeEditor::Draw() {
 	ImGui::Begin("Node Editor");
+	ImGui::TextUnformatted("CTRL+s saves node positions. CTRL+l loads them.");
 	ImNodes::BeginNodeEditor();
 
 	for (auto& node : graph.nodes) {
@@ -66,6 +67,15 @@ void NodeEditor::Draw() {
 
 	for (const auto& link : graph.links) {
 		ImNodes::Link(link.id, link.start_attr, link.end_attr);
+	}
+
+	const char* editorStateSaveFile = "editor_state.ini";
+	ImGuiIO& io = ImGui::GetIO();
+	if (io.KeyCtrl && ImGui::IsKeyPressed(83, false)) {
+		ImNodes::SaveCurrentEditorStateToIniFile(editorStateSaveFile);
+	}
+	else if (io.KeyCtrl && ImGui::IsKeyPressed(76, false)) {
+		ImNodes::LoadCurrentEditorStateFromIniFile(editorStateSaveFile);
 	}
 
 	ImNodes::EndNodeEditor();
