@@ -82,7 +82,21 @@ public:
 	virtual bool Draw() override;
 };
 
-struct Node2 {
+struct Node2a {
+	int id;
+	std::string title;
+	// cannot have reference to abstract base class, there for pointer needed
+	std::vector<std::unique_ptr<BaseAttribute>> inputs;
+	std::vector<std::unique_ptr<BaseAttribute>> outputs;
+};
+
+struct Graph2a {
+	std::vector<Node2a> nodes;
+	// links here
+	int counter = 1000;
+};
+
+struct Node2b {
 	int id;
 	std::string title;
 	// cannot have reference to abstract base class, there for pointer needed
@@ -90,10 +104,10 @@ struct Node2 {
 	std::vector<std::shared_ptr<BaseAttribute>> outputs;
 };
 
-struct Graph2 {
-	std::vector<Node2> nodes;
+struct Graph2b {
+	std::vector<Node2b> nodes;
 	// links here
-	int counter = 1000;
+	int counter = 2000;
 };
 
 class NodeEditor {
@@ -102,7 +116,8 @@ public:
 	void Draw();
 public:
 	Graph1 graph1 = {};
-	Graph2 graph2 = {};
+	Graph2a graph2a = {};
+	Graph2b graph2b = {};
 
 	// TODO: Store actual values to be edited somewhere else
 	MyStruct ms = { 7, 8.5 };

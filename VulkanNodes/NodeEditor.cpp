@@ -24,14 +24,21 @@ NodeEditor::NodeEditor()
 	});
 	graph1.links = { {++graph1.counter, graph1.nodes[0].outputs[0].id, graph1.nodes[1].inputs[0].id} };
 
-	graph2.nodes.push_back({
-		++graph2.counter,
-		"G2 node1 (MyStruct)",
+	Node2a nd;
+	nd.id = ++graph2a.counter;
+	nd.title = "G2a node1 (MyStruct)";
+	nd.inputs.push_back(std::make_unique<FloatAttribute>(++graph2a.counter, "magnitude", ms.magnitude));
+	nd.inputs.push_back(std::make_unique<IntAttribute>(++graph2a.counter, "count", ms.count));
+	graph2a.nodes.push_back(std::move(nd));
+
+	graph2b.nodes.push_back({
+		++graph2b.counter,
+		"G2b node1 (MyStruct)",
 		{
-			std::make_shared<FloatAttribute>(++graph2.counter, "magnitude", ms.magnitude),
-			std::make_shared<IntAttribute>(++graph2.counter, "count", ms.count),
+			std::make_shared<FloatAttribute>(++graph2b.counter, "magnitude", ms.magnitude),
+			std::make_shared<IntAttribute>(++graph2b.counter, "count", ms.count),
 		}
-	});
+		});
 }
 
 void NodeEditor::Draw() {
@@ -78,7 +85,30 @@ void NodeEditor::Draw() {
 		ImNodes::Link(link.id, link.start_attr, link.end_attr);
 	}
 
-	for (auto& node : graph2.nodes) {
+	for (auto& node : graph2a.nodes) {
+		const float nodeWidth = 100;
+		ImNodes::BeginNode(node.id);
+
+		ImNodes::BeginNodeTitleBar();
+		ImGui::TextUnformatted(node.title.c_str());
+		ImNodes::EndNodeTitleBar();
+
+		for (auto& attr : node.inputs) {
+			const float nodeWidth = 100;
+			ImNodes::BeginInputAttribute(attr->id);
+			const float labelWidth = ImGui::CalcTextSize(attr->name.c_str()).x;
+			ImGui::TextUnformatted(attr->name.c_str());
+
+			ImGui::SameLine();
+			ImGui::PushItemWidth(nodeWidth - labelWidth);
+			attr->Draw();
+			ImGui::PopItemWidth();
+			ImNodes::EndOutputAttribute();
+		}
+		ImNodes::EndNode();
+	}
+
+	for (auto& node : graph2b.nodes) {
 		const float nodeWidth = 100;
 		ImNodes::BeginNode(node.id);
 
