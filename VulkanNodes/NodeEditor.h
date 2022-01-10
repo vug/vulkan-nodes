@@ -3,11 +3,13 @@
 #include <string>
 #include <variant>
 #include <vector>
-#include <memory>
 
 #include "dependencies/imnodes.h"
 
-// ATTEMPT 1
+struct MyStruct {
+	int count;
+	float magnitude;
+};
 
 // Cannot have a Value& in Attribute but Value can be made of references!
 using Value = std::variant<std::reference_wrapper<int>, std::reference_wrapper<float>>;
@@ -24,90 +26,51 @@ struct AttributeDrawer {
 	bool operator()(int& val);
 };
 
-struct Node1 {
-	int id;
+// Objects that can be hold/represented by Nodes
+using Object = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
+
+// TODO: placeholder until I figure out how to get the reference to Object from output
+static int outVal = 6;
+
+class Node {
+public:
+	// for ImNodes
+	int id = -1;
 	std::string title;
+	// Object that is populated using UI
+	Object object;
+	// Attributes that refer to Object members. Created at Node construction.
 	std::vector<Attribute> inputs;
 	std::vector<Attribute> outputs;
-	float value;
+
+	// Used in constructor to populate inputs and outputs based on the Object
+	struct InputAddingVisitor {
+		Node& node;
+		void operator()(MyStruct& ms);
+		void operator()(int& num);
+		void operator()(float& num);
+	};
+	InputAddingVisitor adder = { *this };
+
+	Node(std::string title, Object obj);
 };
 
-struct Link1 {
+struct Link {
 	int id;
-	int start_attr, end_attr;
+	int start_attr;
+	int end_attr;
 };
 
-struct Graph1 {
-	std::vector<Node1> nodes;
-	std::vector<Link1> links;
+struct Graph {
+	std::vector<Node> nodes;
+	std::vector<Link> links;
 	int counter = 0;
-};
-
-// ATTEMPT 2
-
-struct MyStruct {
-	int count;
-	float magnitude;
-};
-
-class BaseAttribute {
-public:
-	int id;
-	std::string name;
-	// T& val; // Derived classes will have a member "val" of any type that'll be manipulated via UI
-
-	// draw UI to manipulate val of type T
-	virtual bool Draw() = 0;
-protected:
-	BaseAttribute(int id, std::string name) : id(id), name(name) {}
-};
-
-class FloatAttribute : public BaseAttribute {
-private:
-	float& val;
-public:
-	FloatAttribute() = delete;
-	FloatAttribute(int id, std::string name, float& x) : BaseAttribute(id, name), val(x) {}
-
-	virtual bool Draw() override;
-};
-
-class IntAttribute : public BaseAttribute {
-private:
-	int& val;
-public:
-	IntAttribute() = delete;
-	IntAttribute(int id, std::string name, int& x) : BaseAttribute(id, name), val(x) {}
-
-	virtual bool Draw() override;
-};
-
-struct Node2a {
-	int id;
-	std::string title;
-	// cannot have reference to abstract base class, there for pointer needed
-	std::vector<std::unique_ptr<BaseAttribute>> inputs;
-	std::vector<std::unique_ptr<BaseAttribute>> outputs;
-};
-
-struct Graph2a {
-	std::vector<Node2a> nodes;
-	// links here
-	int counter = 1000;
-};
-
-struct Node2b {
-	int id;
-	std::string title;
-	// cannot have reference to abstract base class, there for pointer needed
-	std::vector<std::shared_ptr<BaseAttribute>> inputs;
-	std::vector<std::shared_ptr<BaseAttribute>> outputs;
-};
-
-struct Graph2b {
-	std::vector<Node2b> nodes;
-	// links here
-	int counter = 2000;
+	void AddNode(Node node) {
+		node.id = ++counter;
+		for (auto& attr : node.inputs) attr.id = ++counter;
+		for (auto& attr : node.outputs) attr.id = ++counter;
+		nodes.push_back(node);
+	}
 };
 
 class NodeEditor {
@@ -115,14 +78,12 @@ public:
 	NodeEditor();
 	void Draw();
 public:
-	Graph1 graph1 = {};
-	Graph2a graph2a = {};
-	Graph2b graph2b = {};
+	Graph graph = {};
 
 	// TODO: Store actual values to be edited somewhere else
-	MyStruct ms = { 7, 8.5 };
-	float f1 = 0.3f, f2 = 0.4f, f3 = 0.6f;
-	int i1 = 5;
+	MyStruct ms1 = { 7, 8.5 };
+	MyStruct ms2 = { 4, 1.5 };
+	int myNum = 66;
 private:
 	AttributeDrawer drawer;
 	ImNodesEditorContext* context = nullptr;
