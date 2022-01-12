@@ -10,11 +10,20 @@ namespace ne1 {
 		//ImNodesIO& io = ImNodes::GetIO();
 		//io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
-		graph.AddNode({ "MyStruct1", ms1 });
-		graph.AddNode({ "MyStruct2", ms2 });
-		graph.links.emplace_back(++graph.counter, graph.nodes[0].outputs[0].id, graph.nodes[1].inputs[1].id);
-		graph.AddNode({ "MyNumber", myNum });
-		graph.links.emplace_back(++graph.counter, graph.nodes[2].outputs[0].id, graph.nodes[0].inputs[1].id);
+		auto nd1 = std::make_shared<Node>("MyStruct1", ms1);
+		graph.AddNode(nd1);
+		auto nd2 = std::make_shared<Node>("MyStruct2", ms2);
+		graph.AddNode(nd2);
+		auto nd3 = std::make_shared<Node>("MyNumber", myNum);
+		graph.AddNode(nd3);
+		auto nd4 = std::make_shared<ObjectViewerNode>();
+		nd4->input = std::make_shared<ObjectAttribute>(-1, nd1->output.name, nd1->output.object);
+		graph.AddNode(nd4);
+
+		graph.links.emplace_back(++graph.counter, nd1->output.id, nd2->inputs[1].id);
+		graph.links.emplace_back(++graph.counter, nd3->output.id, nd1->inputs[1].id);
+		// TODO: call this when link created via UI. and set input to nullptr when link removed.
+		graph.links.emplace_back(++graph.counter, nd1->output.id, nd4->input->id);
 	}
 
 	void NodeEditor::Draw() {
@@ -22,38 +31,15 @@ namespace ne1 {
 		ImGui::TextUnformatted("CTRL+s saves node positions. CTRL+l loads them.");
 		ImNodes::BeginNodeEditor();
 
-		for (auto& node : graph.nodes) {
-			const float nodeWidth = 100;
+		for (auto nodePtr : graph.nodes) {
+			auto& node = *nodePtr;
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();
 			ImGui::TextUnformatted(node.title.c_str());
 			ImNodes::EndNodeTitleBar();
 
-			for (auto& attr : node.inputs) {
-				ImNodes::BeginInputAttribute(attr.id);
-				const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
-				ImGui::TextUnformatted(attr.name.c_str());
-
-				ImGui::SameLine();
-				ImGui::PushItemWidth(nodeWidth - labelWidth);
-				std::visit(drawer, attr.value);
-				ImGui::PopItemWidth();
-				ImNodes::EndOutputAttribute();
-			}
-
-			for (auto& attr : node.outputs) {
-				ImNodes::BeginOutputAttribute(attr.id);
-				const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
-				ImGui::Indent(20);
-				ImGui::TextUnformatted(attr.name.c_str());
-
-				ImGui::SameLine();
-				ImGui::PushItemWidth(nodeWidth - labelWidth - 20);
-				std::visit(drawer, attr.value);
-				ImGui::PopItemWidth();
-				ImNodes::EndOutputAttribute();
-			}
+			node.Draw();
 			ImNodes::EndNode();
 		}
 
@@ -82,23 +68,75 @@ namespace ne1 {
 		return ImGui::DragInt("##hidelabel", &val);
 	}
 
+	bool AttributeDrawer::operator()(MyStruct& obj) {
+		ImGui::Text("MyStruct");
+		ImGui::Text("magnitude: %f", obj.magnitude);
+		ImGui::Text("count: %d", obj.count);
+		return false;
+	}
+
 	Node::Node(std::string title, Object obj)
-		: title(title), object(obj) {
+		: NodeBase(-1, title), object(obj), output(-1, "output", obj) {
 		std::visit(adder, obj);
+	}
+
+	void Node::Draw() {
+		for (auto& attr : inputs) {
+			ImNodes::BeginInputAttribute(attr.id);
+			const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
+			ImGui::TextUnformatted(attr.name.c_str());
+
+			ImGui::SameLine();
+			ImGui::PushItemWidth(nodeWidth - labelWidth);
+			std::visit(AttributeDrawer{}, attr.value);
+			ImGui::PopItemWidth();
+			ImNodes::EndOutputAttribute();
+		}
+
+		{
+			auto& attr = output;
+			ImNodes::BeginOutputAttribute(attr.id);
+			const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
+			ImGui::Indent(20);
+			ImGui::TextUnformatted(attr.name.c_str());
+
+			ImGui::SameLine();
+			ImGui::PushItemWidth(nodeWidth - labelWidth - 20);
+			ImGui::Text("output");
+			ImGui::PopItemWidth();
+			ImNodes::EndOutputAttribute();
+		}
+	}
+
+	void ObjectViewerNode::Draw() {
+		if (input == nullptr)
+			return;
+
+		ImNodes::BeginInputAttribute(input->id);
+		const float labelWidth = ImGui::CalcTextSize(input->name.c_str()).x;
+		ImGui::TextUnformatted(input->name.c_str());
+
+		ImGui::SameLine();
+		ImGui::PushItemWidth(nodeWidth - labelWidth);
+		ImGui::Text("input");
+		ImGui::PopItemWidth();
+		ImNodes::EndOutputAttribute();
+
+		std::visit(AttributeDrawer{}, (*input).object);
 	}
 
 	void Node::InputAddingVisitor::operator()(MyStruct& ms) {
 		node.inputs.emplace_back(-1, "magnitude", ms.magnitude);
 		node.inputs.emplace_back(-1, "count", ms.count);
-		node.outputs.emplace_back(-1, "out", outVal);
+		node.output = ObjectAttribute { -1, "MyStruct", ms};
 	}
 
 	void Node::InputAddingVisitor::operator()(int& n) {
-		node.outputs.emplace_back(-1, "int", n);
+		node.inputs.emplace_back(-1, "int", n);
 	}
 
 	void Node::InputAddingVisitor::operator()(float& x) {
-		node.outputs.emplace_back(-1, "float", x);
+		node.inputs.emplace_back(-1, "float", x);
 	}
 
 } // namespace ne1
