@@ -16,6 +16,8 @@ namespace ne1 {
 
 	// Cannot have a Value& in Attribute but Value can be made of references!
 	using Value = std::variant<std::reference_wrapper<int>, std::reference_wrapper<float>>;
+	// Objects that can be hold/represented by Nodes
+	using Object = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
 
 	class AttributeBase {
 	public:
@@ -32,16 +34,6 @@ namespace ne1 {
 		ValueAttribute(int id, std::string name, Value value) : AttributeBase(id, name), value(value) {}
 	};
 
-	// to std::visit and draw UI of attributes
-	struct AttributeDrawer {
-		bool operator()(float& val);
-		bool operator()(int& val);
-		bool operator()(MyStruct& obj);
-	};
-
-	// Objects that can be hold/represented by Nodes
-	using Object = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
-
 	class ObjectAttribute : public AttributeBase {
 	public:
 		Object object;
@@ -49,8 +41,12 @@ namespace ne1 {
 		ObjectAttribute(int id, std::string name, Object object) : AttributeBase(id, name), object(object) {}
 	};
 
-	// TODO: placeholder until I figure out how to get the reference to Object from output
-	static int outVal = 6;
+	struct AttributeDrawer {
+		bool operator()(float& val);
+		bool operator()(int& val);
+		bool operator()(MyStruct& obj);
+	};
+
 
 	class NodeBase {
 	public:

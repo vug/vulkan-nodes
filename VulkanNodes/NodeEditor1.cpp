@@ -2,6 +2,89 @@
 
 namespace ne1 {
 
+	bool AttributeDrawer::operator()(float& val) {
+		return ImGui::DragFloat("##hidelabel", &val, 0.01f);
+	}
+
+	bool AttributeDrawer::operator()(int& val) {
+		return ImGui::DragInt("##hidelabel", &val);
+	}
+
+	bool AttributeDrawer::operator()(MyStruct& obj) {
+		ImGui::Text("MyStruct");
+		ImGui::Text("magnitude: %f", obj.magnitude);
+		ImGui::Text("count: %d", obj.count);
+		return false;
+	}
+
+	// -------------
+
+	Node::Node(std::string title, Object obj)
+		: NodeBase(-1, title), object(obj), output(-1, "output", obj) {
+		std::visit(adder, obj);
+	}
+
+	void Node::Draw() {
+		for (auto& attr : inputs) {
+			ImNodes::BeginInputAttribute(attr.id);
+			const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
+			ImGui::TextUnformatted(attr.name.c_str());
+
+			ImGui::SameLine();
+			ImGui::PushItemWidth(nodeWidth - labelWidth);
+			std::visit(AttributeDrawer{}, attr.value);
+			ImGui::PopItemWidth();
+			ImNodes::EndOutputAttribute();
+		}
+
+		{
+			auto& attr = output;
+			ImNodes::BeginOutputAttribute(attr.id);
+			const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
+			ImGui::Indent(20);
+			ImGui::TextUnformatted(attr.name.c_str());
+
+			ImGui::SameLine();
+			ImGui::PushItemWidth(nodeWidth - labelWidth - 20);
+			ImGui::Text("output");
+			ImGui::PopItemWidth();
+			ImNodes::EndOutputAttribute();
+		}
+	}
+
+	void Node::InputAddingVisitor::operator()(MyStruct& ms) {
+		node.inputs.emplace_back(-1, "magnitude", ms.magnitude);
+		node.inputs.emplace_back(-1, "count", ms.count);
+		node.output = ObjectAttribute{ -1, "MyStruct", ms };
+	}
+
+	void Node::InputAddingVisitor::operator()(int& n) {
+		node.inputs.emplace_back(-1, "int", n);
+	}
+
+	void Node::InputAddingVisitor::operator()(float& x) {
+		node.inputs.emplace_back(-1, "float", x);
+	}
+
+	void ObjectViewerNode::Draw() {
+		if (input == nullptr)
+			return;
+
+		ImNodes::BeginInputAttribute(input->id);
+		const float labelWidth = ImGui::CalcTextSize(input->name.c_str()).x;
+		ImGui::TextUnformatted(input->name.c_str());
+
+		ImGui::SameLine();
+		ImGui::PushItemWidth(nodeWidth - labelWidth);
+		ImGui::Text("input");
+		ImGui::PopItemWidth();
+		ImNodes::EndOutputAttribute();
+
+		std::visit(AttributeDrawer{}, (*input).object);
+	}
+
+	// -------------
+
 	NodeEditor::NodeEditor()
 		: context(ImNodes::EditorContextCreate()) {
 
@@ -59,84 +142,4 @@ namespace ne1 {
 		ImNodes::EndNodeEditor();
 		ImGui::End();
 	}
-
-	bool AttributeDrawer::operator()(float& val) {
-		return ImGui::DragFloat("##hidelabel", &val, 0.01f);
-	}
-
-	bool AttributeDrawer::operator()(int& val) {
-		return ImGui::DragInt("##hidelabel", &val);
-	}
-
-	bool AttributeDrawer::operator()(MyStruct& obj) {
-		ImGui::Text("MyStruct");
-		ImGui::Text("magnitude: %f", obj.magnitude);
-		ImGui::Text("count: %d", obj.count);
-		return false;
-	}
-
-	Node::Node(std::string title, Object obj)
-		: NodeBase(-1, title), object(obj), output(-1, "output", obj) {
-		std::visit(adder, obj);
-	}
-
-	void Node::Draw() {
-		for (auto& attr : inputs) {
-			ImNodes::BeginInputAttribute(attr.id);
-			const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
-			ImGui::TextUnformatted(attr.name.c_str());
-
-			ImGui::SameLine();
-			ImGui::PushItemWidth(nodeWidth - labelWidth);
-			std::visit(AttributeDrawer{}, attr.value);
-			ImGui::PopItemWidth();
-			ImNodes::EndOutputAttribute();
-		}
-
-		{
-			auto& attr = output;
-			ImNodes::BeginOutputAttribute(attr.id);
-			const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
-			ImGui::Indent(20);
-			ImGui::TextUnformatted(attr.name.c_str());
-
-			ImGui::SameLine();
-			ImGui::PushItemWidth(nodeWidth - labelWidth - 20);
-			ImGui::Text("output");
-			ImGui::PopItemWidth();
-			ImNodes::EndOutputAttribute();
-		}
-	}
-
-	void ObjectViewerNode::Draw() {
-		if (input == nullptr)
-			return;
-
-		ImNodes::BeginInputAttribute(input->id);
-		const float labelWidth = ImGui::CalcTextSize(input->name.c_str()).x;
-		ImGui::TextUnformatted(input->name.c_str());
-
-		ImGui::SameLine();
-		ImGui::PushItemWidth(nodeWidth - labelWidth);
-		ImGui::Text("input");
-		ImGui::PopItemWidth();
-		ImNodes::EndOutputAttribute();
-
-		std::visit(AttributeDrawer{}, (*input).object);
-	}
-
-	void Node::InputAddingVisitor::operator()(MyStruct& ms) {
-		node.inputs.emplace_back(-1, "magnitude", ms.magnitude);
-		node.inputs.emplace_back(-1, "count", ms.count);
-		node.output = ObjectAttribute { -1, "MyStruct", ms};
-	}
-
-	void Node::InputAddingVisitor::operator()(int& n) {
-		node.inputs.emplace_back(-1, "int", n);
-	}
-
-	void Node::InputAddingVisitor::operator()(float& x) {
-		node.inputs.emplace_back(-1, "float", x);
-	}
-
 } // namespace ne1
