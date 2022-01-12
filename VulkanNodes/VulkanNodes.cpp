@@ -1,5 +1,6 @@
 ﻿#include "VulkanNodes.h"
 #include "NodeEditor1.h"
+#include "NodeEditor2.h"
 
 #include "Window.h"
 #include "VulkanContext.h"
@@ -35,6 +36,7 @@ int main() {
 
 	ImGuiHelper imGuiHelper(vc);
 	ne1::NodeEditor nodeEditor;
+	//ne2::NodeEditor nodeEditor;
 	
 	while (!win.ShouldClose()) {
 		win.PollEvents();
