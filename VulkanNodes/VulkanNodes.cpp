@@ -1,5 +1,5 @@
 ﻿#include "VulkanNodes.h"
-#include "NodeEditor.h"
+#include "NodeEditor1.h"
 
 #include "Window.h"
 #include "VulkanContext.h"
@@ -34,7 +34,7 @@ int main() {
 	vkDestroyShaderModule(vc.device, frag, nullptr);
 
 	ImGuiHelper imGuiHelper(vc);
-	NodeEditor nodeEditor;
+	ne1::NodeEditor nodeEditor;
 	
 	while (!win.ShouldClose()) {
 		win.PollEvents();

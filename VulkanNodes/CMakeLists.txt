@@ -2,7 +2,7 @@
 
 add_executable (VulkanNodes 
     "dependencies/imnodes_internal.h" "dependencies/imnodes.h" "dependencies/imnodes.cpp"
-    "VulkanNodes.cpp" "VulkanNodes.h" "Window.h" "Window.cpp" "VulkanContext.h" "VulkanContext.cpp" "ImGuiHelper.h" "ImGuiHelper.cpp" "NodeEditor.h" "NodeEditor.cpp")
+    "VulkanNodes.cpp" "VulkanNodes.h" "Window.h" "Window.cpp" "VulkanContext.h" "VulkanContext.cpp" "ImGuiHelper.h" "ImGuiHelper.cpp" "NodeEditor1.h" "NodeEditor1.cpp")
 
 find_package(glfw3 CONFIG REQUIRED)
 target_link_libraries(VulkanNodes PRIVATE glfw)
