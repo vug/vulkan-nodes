@@ -1,5 +1,7 @@
 #include "NodeEditor1.h"
 
+#include <cassert>
+
 namespace ne1 {
 
 	bool AttributeDrawer::operator()(float& val) {
@@ -89,9 +91,9 @@ namespace ne1 {
 		: context(ImNodes::EditorContextCreate()) {
 
 		ImNodes::EditorContextSet(context);
-		//ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
-		//ImNodesIO& io = ImNodes::GetIO();
-		//io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
+		ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
+		ImNodesIO& io = ImNodes::GetIO();
+		io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
 		auto nd1 = std::make_shared<Node>("MyStruct1", ms1);
 		graph.AddNode(nd1);
@@ -139,7 +141,46 @@ namespace ne1 {
 			ImNodes::LoadCurrentEditorStateFromIniFile(editorStateSaveFile);
 		}
 
+		ImNodes::MiniMap();
+		ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
 		ImNodes::EndNodeEditor();
+
+		// Link Creation
+		{
+			int linkStartId, linkEndId;
+			if (ImNodes::IsLinkCreated(&linkStartId, &linkEndId)) {
+				graph.links.emplace_back(++graph.counter, linkStartId, linkEndId);
+			}
+		}
+
+		// Link Deletion
+		{
+			int linkId;
+			if (ImNodes::IsLinkDestroyed(&linkId))
+			{
+				auto iter =
+					std::find_if(graph.links.begin(), graph.links.end(), [linkId](const Link& link) -> bool {
+						return link.id == linkId;
+					});
+				assert(iter != graph.links.end());
+				graph.links.erase(iter);
+			}
+		}
+
+		// TODO: might not be needed
+		int node_id;
+		if (ImNodes::IsNodeHovered(&node_id)) {
+			//nodeHovered = node_id;
+		}
+
+		// TODO: highlight selected nodes
+		const int numSelectedNodes = ImNodes::NumSelectedNodes();
+		if (numSelectedNodes > 0) {
+			std::vector<int> selectedNodeIds;
+			selectedNodeIds.resize(numSelectedNodes);
+			ImNodes::GetSelectedNodes(selectedNodeIds.data());
+		}
+
 		ImGui::End();
 	}
 } // namespace ne1
