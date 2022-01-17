@@ -24,21 +24,21 @@ namespace ne1 {
 		int id;
 		std::string name;
 
-		AttributeBase(int id, std::string title) : id(id), name(name) {}
+		AttributeBase(int id, std::string title) : id{ id }, name{ name } {}
 	};
 
 	class ValueAttribute : public AttributeBase {
 	public:
 		Value value;
 
-		ValueAttribute(int id, std::string name, Value value) : AttributeBase(id, name), value(value) {}
+		ValueAttribute(int id, std::string name, Value value) : AttributeBase{ id, name }, value{ value } {}
 	};
 
 	class ObjectAttribute : public AttributeBase {
 	public:
 		Object object;
 
-		ObjectAttribute(int id, std::string name, Object object) : AttributeBase(id, name), object(object) {}
+		ObjectAttribute(int id, std::string name, Object object) : AttributeBase{ id, name }, object{ object } {}
 	};
 
 	struct AttributeDrawer {
@@ -50,12 +50,12 @@ namespace ne1 {
 
 	class NodeBase {
 	public:
-		int id = -1;
-		std::string title;
+		int id{ -1 };
+		std::string title{};
 
-		const float nodeWidth = 100;
+		const float nodeWidth{ 100 };
 
-		NodeBase(int id, std::string title) : id(id), title(title) {}
+		NodeBase(int id, std::string title) : id{ id }, title{ title } {}
 		virtual void Draw() = 0;
 	};
 
@@ -74,7 +74,7 @@ namespace ne1 {
 			void operator()(int& num);
 			void operator()(float& num);
 		};
-		InputAddingVisitor adder = { *this };
+		InputAddingVisitor adder{ *this };
 
 		Node(std::string title, Object obj);
 		virtual void Draw() override;
@@ -83,9 +83,9 @@ namespace ne1 {
 	class ObjectViewerNode : public NodeBase {
 	public:
 		// TODO: instead of the whole Attribute just make the object of the attribute a pointer
-		std::shared_ptr<ObjectAttribute> input = nullptr;
+		std::shared_ptr<ObjectAttribute> input{};
 
-		ObjectViewerNode() : NodeBase(-1, "Viewer") {}
+		ObjectViewerNode() : NodeBase{ -1, "Viewer" } {}
 		virtual void Draw() override;
 	};
 
@@ -98,7 +98,7 @@ namespace ne1 {
 	struct Graph {
 		std::vector<std::shared_ptr<NodeBase>> nodes;
 		std::vector<Link> links;
-		int counter = 0;
+		int counter{};
 		void AddNode(std::shared_ptr<Node> node) {
 			node->id = ++counter;
 			for (auto& attr : node->inputs) attr.id = ++counter;
@@ -107,7 +107,7 @@ namespace ne1 {
 		}
 		void AddNode(std::shared_ptr<ObjectViewerNode> node) {
 			node->id = ++counter;
-			if (node->input != nullptr)
+			if (node->input)
 				node->input->id = ++counter;
 			nodes.push_back(node);
 		}
@@ -118,14 +118,14 @@ namespace ne1 {
 		NodeEditor();
 		void Draw();
 	public:
-		Graph graph = {};
+		Graph graph{};
 
 		// TODO: Store actual values to be edited somewhere else
-		MyStruct ms1 = { 7, 8.5 };
-		MyStruct ms2 = { 4, 1.5 };
-		int myNum = 66;
+		MyStruct ms1{ 7, 8.5 };
+		MyStruct ms2{ 4, 1.5 };
+		int myNum{ 66 };
 	private:
-		ImNodesEditorContext* context = nullptr;
+		ImNodesEditorContext* context{};
 	};
 
 } // namespace ne1

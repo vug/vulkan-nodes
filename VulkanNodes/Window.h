@@ -16,8 +16,8 @@ public:
 
 	VkResult CreateSurface(VkInstance instance, VkSurfaceKHR* surface) const;
 
-	bool ShouldClose();
-	void PollEvents();
+	bool ShouldClose() const;
+	void PollEvents() const;
 
 	// Getters
 	GLFWwindow* GetGLFWWindow() const { return window; }

@@ -87,16 +87,16 @@ ImGuiHelper::~ImGuiHelper() {
 	ImGui::DestroyContext();
 }
 
-void ImGuiHelper::Begin() {
+void ImGuiHelper::Begin() const {
 	ImGui_ImplVulkan_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 }
 
-void ImGuiHelper::End() {
+void ImGuiHelper::End() const {
 	ImGui::Render();
 }
 
-void ImGuiHelper::AddDrawCalls(const VkCommandBuffer& cmdBuf) {
+void ImGuiHelper::AddDrawCalls(const VkCommandBuffer& cmdBuf) const {
 	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), cmdBuf);
 }

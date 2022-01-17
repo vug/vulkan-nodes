@@ -22,14 +22,14 @@ namespace ne1 {
 	// -------------
 
 	Node::Node(std::string title, Object obj)
-		: NodeBase(-1, title), object(obj), output(-1, "output", obj) {
+		: NodeBase{ -1, title }, object{ obj }, output{ -1, "output", obj } {
 		std::visit(adder, obj);
 	}
 
 	void Node::Draw() {
 		for (auto& attr : inputs) {
 			ImNodes::BeginInputAttribute(attr.id);
-			const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
+			const float labelWidth{ ImGui::CalcTextSize(attr.name.c_str()).x };
 			ImGui::TextUnformatted(attr.name.c_str());
 
 			ImGui::SameLine();
@@ -40,9 +40,9 @@ namespace ne1 {
 		}
 
 		{
-			auto& attr = output;
+			auto& attr{ output };
 			ImNodes::BeginOutputAttribute(attr.id);
-			const float labelWidth = ImGui::CalcTextSize(attr.name.c_str()).x;
+			const float labelWidth{ ImGui::CalcTextSize(attr.name.c_str()).x };
 			ImGui::Indent(20);
 			ImGui::TextUnformatted(attr.name.c_str());
 
@@ -69,11 +69,11 @@ namespace ne1 {
 	}
 
 	void ObjectViewerNode::Draw() {
-		if (input == nullptr)
+		if (!input)
 			return;
 
 		ImNodes::BeginInputAttribute(input->id);
-		const float labelWidth = ImGui::CalcTextSize(input->name.c_str()).x;
+		const float labelWidth{ ImGui::CalcTextSize(input->name.c_str()).x };
 		ImGui::TextUnformatted(input->name.c_str());
 
 		ImGui::SameLine();
@@ -88,20 +88,20 @@ namespace ne1 {
 	// -------------
 
 	NodeEditor::NodeEditor()
-		: context(ImNodes::EditorContextCreate()) {
+		: context{ ImNodes::EditorContextCreate() } {
 
 		ImNodes::EditorContextSet(context);
 		ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
-		ImNodesIO& io = ImNodes::GetIO();
+		ImNodesIO& io{ ImNodes::GetIO() };
 		io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 
-		auto nd1 = std::make_shared<Node>("MyStruct1", ms1);
+		auto nd1{ std::make_shared<Node>("MyStruct1", ms1) };
 		graph.AddNode(nd1);
-		auto nd2 = std::make_shared<Node>("MyStruct2", ms2);
+		auto nd2{ std::make_shared<Node>("MyStruct2", ms2) };
 		graph.AddNode(nd2);
-		auto nd3 = std::make_shared<Node>("MyNumber", myNum);
+		auto nd3{ std::make_shared<Node>("MyNumber", myNum) };
 		graph.AddNode(nd3);
-		auto nd4 = std::make_shared<ObjectViewerNode>();
+		auto nd4{ std::make_shared<ObjectViewerNode>() };
 		nd4->input = std::make_shared<ObjectAttribute>(-1, nd1->output.name, nd1->output.object);
 		graph.AddNode(nd4);
 
@@ -117,7 +117,7 @@ namespace ne1 {
 		ImNodes::BeginNodeEditor();
 
 		for (auto nodePtr : graph.nodes) {
-			auto& node = *nodePtr;
+			auto& node{ *nodePtr };
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();
@@ -132,8 +132,8 @@ namespace ne1 {
 			ImNodes::Link(link.id, link.start_attr, link.end_attr);
 		}
 
-		const char* editorStateSaveFile = "editor_state.ini";
-		ImGuiIO& io = ImGui::GetIO();
+		const char* editorStateSaveFile{ "editor_state.ini" };
+		ImGuiIO& io{ ImGui::GetIO() };
 		if (io.KeyCtrl && ImGui::IsKeyPressed(83, false)) {
 			ImNodes::SaveCurrentEditorStateToIniFile(editorStateSaveFile);
 		}
@@ -156,12 +156,12 @@ namespace ne1 {
 		// Link Deletion
 		{
 			int linkId;
-			if (ImNodes::IsLinkDestroyed(&linkId))
-			{
-				auto iter =
+			if (ImNodes::IsLinkDestroyed(&linkId)) {
+				auto iter{
 					std::find_if(graph.links.begin(), graph.links.end(), [linkId](const Link& link) -> bool {
 						return link.id == linkId;
-					});
+					})
+				};
 				assert(iter != graph.links.end());
 				graph.links.erase(iter);
 			}
@@ -174,7 +174,7 @@ namespace ne1 {
 		}
 
 		// TODO: highlight selected nodes
-		const int numSelectedNodes = ImNodes::NumSelectedNodes();
+		const int numSelectedNodes{ ImNodes::NumSelectedNodes() };
 		if (numSelectedNodes > 0) {
 			std::vector<int> selectedNodeIds;
 			selectedNodeIds.resize(numSelectedNodes);

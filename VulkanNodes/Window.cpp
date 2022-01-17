@@ -48,10 +48,10 @@ VkResult Window::CreateSurface(VkInstance instance, VkSurfaceKHR* surface) const
 	return glfwCreateWindowSurface(instance, window, nullptr, surface);
 }
 
-bool Window::ShouldClose() {
+bool Window::ShouldClose() const {
 	return glfwWindowShouldClose(window);
 }
 
-void Window::PollEvents() {
+void Window::PollEvents() const {
 	glfwPollEvents();
 }
