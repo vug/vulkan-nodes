@@ -26,7 +26,7 @@ namespace ne1 {
 		std::visit(adder, obj);
 	}
 
-	void Node::Draw() {
+	void Node::Draw() const {
 		for (auto& attr : inputs) {
 			ImNodes::BeginInputAttribute(attr.id);
 			const float labelWidth{ ImGui::CalcTextSize(attr.name.c_str()).x };
@@ -68,7 +68,7 @@ namespace ne1 {
 		node.inputs.emplace_back(-1, "float", x);
 	}
 
-	void ObjectViewerNode::Draw() {
+	void ObjectViewerNode::Draw() const {
 		if (!input)
 			return;
 
@@ -86,15 +86,8 @@ namespace ne1 {
 	}
 
 	// -------------
-
-	NodeEditor::NodeEditor()
-		: context{ ImNodes::EditorContextCreate() } {
-
-		ImNodes::EditorContextSet(context);
-		ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
-		ImNodesIO& io{ ImNodes::GetIO() };
-		io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
-
+	Graph NodeEditor::MakeTestGraph() {
+		Graph graph{};
 		auto nd1{ std::make_shared<Node>("MyStruct1", ms1) };
 		graph.AddNode(nd1);
 		auto nd2{ std::make_shared<Node>("MyStruct2", ms2) };
@@ -109,15 +102,25 @@ namespace ne1 {
 		graph.links.emplace_back(++graph.counter, nd3->output.id, nd1->inputs[1].id);
 		// TODO: call this when link created via UI. and set input to nullptr when link removed.
 		graph.links.emplace_back(++graph.counter, nd1->output.id, nd4->input->id);
+		return graph;
 	}
+
+	NodeEditor::NodeEditor(const Graph& graph) : graph{ graph } {
+		ImNodes::EditorContextSet(context);
+		ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
+		ImNodesIO& io{ ImNodes::GetIO() };
+		io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
+	}
+
+	NodeEditor::NodeEditor() : NodeEditor{ MakeTestGraph() } {}
 
 	void NodeEditor::Draw() {
 		ImGui::Begin("Node Editor");
 		ImGui::TextUnformatted("CTRL+s saves node positions. CTRL+l loads them.");
 		ImNodes::BeginNodeEditor();
 
-		for (auto nodePtr : graph.nodes) {
-			auto& node{ *nodePtr };
+		for (const auto& nodePtr : graph.nodes) {
+			const auto& node{ *nodePtr };
 			ImNodes::BeginNode(node.id);
 
 			ImNodes::BeginNodeTitleBar();

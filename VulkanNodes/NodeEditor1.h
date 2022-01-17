@@ -23,8 +23,6 @@ namespace ne1 {
 	public:
 		int id;
 		std::string name;
-
-		AttributeBase(int id, std::string title) : id{ id }, name{ name } {}
 	};
 
 	class ValueAttribute : public AttributeBase {
@@ -56,7 +54,7 @@ namespace ne1 {
 		const float nodeWidth{ 100 };
 
 		NodeBase(int id, std::string title) : id{ id }, title{ title } {}
-		virtual void Draw() = 0;
+		virtual void Draw() const = 0;
 	};
 
 	class Node : public NodeBase {
@@ -77,7 +75,7 @@ namespace ne1 {
 		InputAddingVisitor adder{ *this };
 
 		Node(std::string title, Object obj);
-		virtual void Draw() override;
+		virtual void Draw() const override;
 	};
 
 	class ObjectViewerNode : public NodeBase {
@@ -86,7 +84,7 @@ namespace ne1 {
 		std::shared_ptr<ObjectAttribute> input{};
 
 		ObjectViewerNode() : NodeBase{ -1, "Viewer" } {}
-		virtual void Draw() override;
+		virtual void Draw() const override;
 	};
 
 	struct Link {
@@ -116,6 +114,7 @@ namespace ne1 {
 	class NodeEditor {
 	public:
 		NodeEditor();
+		NodeEditor(const Graph& graph);
 		void Draw();
 	public:
 		Graph graph{};
@@ -125,7 +124,8 @@ namespace ne1 {
 		MyStruct ms2{ 4, 1.5 };
 		int myNum{ 66 };
 	private:
-		ImNodesEditorContext* context{};
+		ImNodesEditorContext* context = ImNodes::EditorContextCreate();
+		Graph MakeTestGraph();
 	};
 
 } // namespace ne1
