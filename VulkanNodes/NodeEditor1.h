@@ -3,6 +3,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -107,7 +108,7 @@ namespace ne1 {
 
 	struct Graph {
 		std::vector<std::shared_ptr<NodeBase>> nodes;
-		std::vector<Link> links;
+		std::unordered_map<int, Link> links;
 		int counter{};
 		void AddNode(std::shared_ptr<ObjectEditorNode> node) {
 			node->id = ++counter;
@@ -121,8 +122,14 @@ namespace ne1 {
 				node->input.id = ++counter;
 			nodes.push_back(node);
 		}
+
+		void AddLink(const int attr1Id, const int attr2Id) {
+			const int id = ++counter;
+			links[id] = { id, attr1Id, attr2Id };
+		}
 		void AddLink(const AttributeBase& attr1, const AttributeBase attr2) {
-			links.emplace_back(++counter, attr1.id, attr2.id);
+			const int id = ++counter;
+			links[id] = { id, attr1.id, attr2.id };
 		}
 	};
 

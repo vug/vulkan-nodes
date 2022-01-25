@@ -135,8 +135,8 @@ namespace ne1 {
 			ImNodes::EndNode();
 		}
 
-		for (const auto& link : graph.links) {
-			ImNodes::Link(link.id, link.start_attr, link.end_attr);
+		for (const auto& [id, link] : graph.links) {
+			ImNodes::Link(id, link.start_attr, link.end_attr);
 		}
 
 		const char* editorStateSaveFile{ "editor_state.ini" };
@@ -156,7 +156,7 @@ namespace ne1 {
 		{
 			int linkStartId, linkEndId;
 			if (ImNodes::IsLinkCreated(&linkStartId, &linkEndId)) {
-				graph.links.emplace_back(++graph.counter, linkStartId, linkEndId);
+				graph.AddLink(linkStartId, linkEndId);
 			}
 		}
 
@@ -164,13 +164,9 @@ namespace ne1 {
 		{
 			int linkId;
 			if (ImNodes::IsLinkDestroyed(&linkId)) {
-				auto iter{
-					std::find_if(graph.links.begin(), graph.links.end(), [linkId](const Link& link) -> bool {
-						return link.id == linkId;
-					})
-				};
-				assert(iter != graph.links.end());
-				graph.links.erase(iter);
+				assert(graph.links.contains(linkId)); // linkId to be destroyed should exist
+				const auto& link = graph.links.at(linkId);
+				graph.links.erase(linkId);
 			}
 		}
 
