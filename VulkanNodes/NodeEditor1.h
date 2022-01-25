@@ -25,28 +25,32 @@ namespace ne1 {
 	public:
 		int id;
 		std::string name;
+		int type = -2;
+
+		AttributeBase(int id, std::string name, int type) : id{ id }, name{ name }, type{ type } {}
+		virtual void foo() {}
 	};
 
 	class ValueAttribute : public AttributeBase {
 	public:
 		ValueRef value;
 
-		ValueAttribute(int id, std::string name, ValueRef value) : AttributeBase{ id, name }, value{ value } {}
+		ValueAttribute(int id, std::string name, ValueRef value) : AttributeBase{ id, name, 10 }, value{ value } {}
 	};
 
 	class ObjectOutputAttribute : public AttributeBase {
 	public:
 		ObjectRef object;
 
-		ObjectOutputAttribute(int id, std::string name, ObjectRef object) : AttributeBase{ id, name }, object{ object } {}
+		ObjectOutputAttribute(int id, std::string name, ObjectRef object) : AttributeBase{ id, name, 20 }, object{ object } {}
 	};
 
 	class ViewerInputAttribute : public AttributeBase {
 	public:
 		std::optional<ObjectRef> optObject;
 
-		ViewerInputAttribute(int id, std::string name) : AttributeBase{ id, name }, optObject{} {}
-		ViewerInputAttribute(int id, std::string name, ObjectRef object) : AttributeBase{ id, name }, optObject{ object } {}
+		ViewerInputAttribute(int id, std::string name) : AttributeBase{ id, name, 30 }, optObject{} {}
+		ViewerInputAttribute(int id, std::string name, ObjectRef object) : AttributeBase{ id, name, 30 }, optObject{ object } {}
 	};
 
 	struct AttributeDrawer {
@@ -109,25 +113,52 @@ namespace ne1 {
 	struct Graph {
 		std::vector<std::shared_ptr<NodeBase>> nodes;
 		std::unordered_map<int, Link> links;
+		std::unordered_map<int, std::reference_wrapper<AttributeBase>> attributes;
 		int counter{};
 		void AddNode(std::shared_ptr<ObjectEditorNode> node) {
 			node->id = ++counter;
-			for (auto& attr : node->inputs) attr.id = ++counter;
+			for (auto& attr : node->inputs) {
+				attr.id = ++counter;
+				attributes.insert({ attr.id, attr });
+			}
 			node->output.id = ++counter;
+			attributes.insert({ node->output.id, node->output });
 			nodes.push_back(node);
 		}
 		void AddNode(std::shared_ptr<ObjectViewerNode> node) {
 			node->id = ++counter;
-			if (node->input.optObject.has_value())
-				node->input.id = ++counter;
+			node->input.id = ++counter;
+			attributes.insert({ node->input.id, node->input });				
 			nodes.push_back(node);
 		}
 
 		void AddLink(const int attr1Id, const int attr2Id) {
-			const int id = ++counter;
-			links[id] = { id, attr1Id, attr2Id };
+			assert(attributes.contains(attr1Id));
+			assert(attributes.contains(attr2Id));
+			AddLink(attributes.at(attr1Id), attributes.at(attr2Id));
 		}
-		void AddLink(const AttributeBase& attr1, const AttributeBase attr2) {
+		void AddLink(AttributeBase& attr1, AttributeBase& attr2) {
+			AttributeBase* pBase1 = &attr1;
+			AttributeBase* pBase2 = &attr2;
+			if (ViewerInputAttribute* attrIn = dynamic_cast<ViewerInputAttribute*>(pBase2)) {
+				if (ObjectOutputAttribute* attrOut = dynamic_cast<ObjectOutputAttribute*>(pBase1)) {
+
+					// does input attr already has connection?
+					std::vector<int> linksToDelete;
+					for (const auto& [linkId, link] : links) {
+						// if yes, mark input's link for deletion, and reset view reference
+						if (link.end_attr == attrIn->id) {
+							linksToDelete.push_back(linkId);
+							attrIn->optObject.reset();
+						}
+					}
+					for (int linkId : linksToDelete)
+						links.erase(linkId);
+					// new view reference
+					attrIn->optObject = attrOut->object;
+				}
+			}
+
 			const int id = ++counter;
 			links[id] = { id, attr1.id, attr2.id };
 		}

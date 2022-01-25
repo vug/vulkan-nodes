@@ -99,12 +99,10 @@ namespace ne1 {
 		auto nd3{ std::make_shared<ObjectEditorNode>("MyNumber", myNum) };
 		graph.AddNode(nd3);
 		auto nd4{ std::make_shared<ObjectViewerNode>() };
-		nd4->input = ViewerInputAttribute{ -1, nd1->output.name, nd1->output.object };
 		graph.AddNode(nd4);
 
 		graph.AddLink(nd1->output, nd2->inputs[1]);
 		graph.AddLink(nd3->output, nd1->inputs[1]);
-		// TODO: call this when link created via UI. and set input to nullptr when link removed.
 		graph.AddLink(nd1->output, nd4->input);
 		return graph;
 	}
