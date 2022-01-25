@@ -121,6 +121,9 @@ namespace ne1 {
 				node->input.id = ++counter;
 			nodes.push_back(node);
 		}
+		void AddLink(const AttributeBase& attr1, const AttributeBase attr2) {
+			links.emplace_back(++counter, attr1.id, attr2.id);
+		}
 	};
 
 	class NodeEditor {

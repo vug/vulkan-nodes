@@ -102,10 +102,10 @@ namespace ne1 {
 		nd4->input = ViewerInputAttribute{ -1, nd1->output.name, nd1->output.object };
 		graph.AddNode(nd4);
 
-		graph.links.emplace_back(++graph.counter, nd1->output.id, nd2->inputs[1].id);
-		graph.links.emplace_back(++graph.counter, nd3->output.id, nd1->inputs[1].id);
+		graph.AddLink(nd1->output, nd2->inputs[1]);
+		graph.AddLink(nd3->output, nd1->inputs[1]);
 		// TODO: call this when link created via UI. and set input to nullptr when link removed.
-		graph.links.emplace_back(++graph.counter, nd1->output.id, nd4->input.id);
+		graph.AddLink(nd1->output, nd4->input);
 		return graph;
 	}
 
