@@ -21,12 +21,12 @@ namespace ne1 {
 
 	// -------------
 
-	Node::Node(std::string title, Object obj)
+	ObjectEditorNode::ObjectEditorNode(std::string title, ObjectRef obj)
 		: NodeBase{ -1, title }, object{ obj }, output{ -1, "output", obj } {
 		std::visit(adder, obj);
 	}
 
-	void Node::Draw() const {
+	void ObjectEditorNode::Draw() const {
 		for (auto& attr : inputs) {
 			ImNodes::BeginInputAttribute(attr.id);
 			const float labelWidth{ ImGui::CalcTextSize(attr.name.c_str()).x };
@@ -54,17 +54,17 @@ namespace ne1 {
 		}
 	}
 
-	void Node::InputAddingVisitor::operator()(MyStruct& ms) {
+	void ObjectEditorNode::InputAddingVisitor::operator()(MyStruct& ms) {
 		node.inputs.emplace_back(-1, "magnitude", ms.magnitude);
 		node.inputs.emplace_back(-1, "count", ms.count);
 		node.output = ObjectAttribute{ -1, "MyStruct", ms };
 	}
 
-	void Node::InputAddingVisitor::operator()(int& n) {
+	void ObjectEditorNode::InputAddingVisitor::operator()(int& n) {
 		node.inputs.emplace_back(-1, "int", n);
 	}
 
-	void Node::InputAddingVisitor::operator()(float& x) {
+	void ObjectEditorNode::InputAddingVisitor::operator()(float& x) {
 		node.inputs.emplace_back(-1, "float", x);
 	}
 
@@ -88,18 +88,18 @@ namespace ne1 {
 	// -------------
 	Graph NodeEditor::MakeTestGraph() {
 		Graph graph{};
-		auto nd1{ std::make_shared<Node>("MyStruct1", ms1) };
+		auto nd1{ std::make_shared<ObjectEditorNode>("MyStruct1", ms1) };
 		graph.AddNode(nd1);
-		auto nd2{ std::make_shared<Node>("MyStruct2", ms2) };
+		auto nd2{ std::make_shared<ObjectEditorNode>("MyStruct2", ms2) };
 		graph.AddNode(nd2);
-		auto nd3{ std::make_shared<Node>("MyNumber", myNum) };
-		graph.AddNode(nd3);
+		//auto nd3{ std::make_shared<ObjectEditorNode>("MyNumber", myNum) };
+		//graph.AddNode(nd3);
 		auto nd4{ std::make_shared<ObjectViewerNode>() };
-		nd4->input = std::make_shared<ObjectAttribute>(-1, nd1->output.name, nd1->output.object);
+		nd4->input = std::make_shared<ObjectAttribute>(-1, nd1->output.name, nd2->output.object);
 		graph.AddNode(nd4);
 
 		graph.links.emplace_back(++graph.counter, nd1->output.id, nd2->inputs[1].id);
-		graph.links.emplace_back(++graph.counter, nd3->output.id, nd1->inputs[1].id);
+		//graph.links.emplace_back(++graph.counter, nd3->output.id, nd1->inputs[1].id);
 		// TODO: call this when link created via UI. and set input to nullptr when link removed.
 		graph.links.emplace_back(++graph.counter, nd1->output.id, nd4->input->id);
 		return graph;

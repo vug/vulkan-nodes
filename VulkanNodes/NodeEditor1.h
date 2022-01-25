@@ -15,9 +15,9 @@ namespace ne1 {
 	};
 
 	// Cannot have a Value& in Attribute but Value can be made of references!
-	using Value = std::variant<std::reference_wrapper<int>, std::reference_wrapper<float>>;
+	using ValueRef = std::variant<std::reference_wrapper<int>, std::reference_wrapper<float>>;
 	// Objects that can be hold/represented by Nodes
-	using Object = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
+	using ObjectRef = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
 
 	class AttributeBase {
 	public:
@@ -27,16 +27,16 @@ namespace ne1 {
 
 	class ValueAttribute : public AttributeBase {
 	public:
-		Value value;
+		ValueRef value;
 
-		ValueAttribute(int id, std::string name, Value value) : AttributeBase{ id, name }, value{ value } {}
+		ValueAttribute(int id, std::string name, ValueRef value) : AttributeBase{ id, name }, value{ value } {}
 	};
 
 	class ObjectAttribute : public AttributeBase {
 	public:
-		Object object;
+		ObjectRef object;
 
-		ObjectAttribute(int id, std::string name, Object object) : AttributeBase{ id, name }, object{ object } {}
+		ObjectAttribute(int id, std::string name, ObjectRef object) : AttributeBase{ id, name }, object{ object } {}
 	};
 
 	struct AttributeDrawer {
@@ -57,30 +57,29 @@ namespace ne1 {
 		virtual void Draw() const = 0;
 	};
 
-	class Node : public NodeBase {
+	class ObjectEditorNode : public NodeBase {
 	public:
 		// Object that is populated using UI
-		Object object;
+		ObjectRef object;
 		// Attributes that refer to Object members. Created at Node construction.
 		std::vector<ValueAttribute> inputs;
 		ObjectAttribute output;
 
 		// Used in constructor to populate inputs and outputs based on the Object
 		struct InputAddingVisitor {
-			Node& node;
+			ObjectEditorNode& node;
 			void operator()(MyStruct& ms);
 			void operator()(int& num);
 			void operator()(float& num);
 		};
 		InputAddingVisitor adder{ *this };
 
-		Node(std::string title, Object obj);
+		ObjectEditorNode(std::string title, ObjectRef obj);
 		virtual void Draw() const override;
 	};
 
 	class ObjectViewerNode : public NodeBase {
 	public:
-		// TODO: instead of the whole Attribute just make the object of the attribute a pointer
 		std::shared_ptr<ObjectAttribute> input{};
 
 		ObjectViewerNode() : NodeBase{ -1, "Viewer" } {}
@@ -97,7 +96,7 @@ namespace ne1 {
 		std::vector<std::shared_ptr<NodeBase>> nodes;
 		std::vector<Link> links;
 		int counter{};
-		void AddNode(std::shared_ptr<Node> node) {
+		void AddNode(std::shared_ptr<ObjectEditorNode> node) {
 			node->id = ++counter;
 			for (auto& attr : node->inputs) attr.id = ++counter;
 			node->output.id = ++counter;
