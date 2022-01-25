@@ -162,9 +162,7 @@ namespace ne1 {
 		{
 			int linkId;
 			if (ImNodes::IsLinkDestroyed(&linkId)) {
-				assert(graph.links.contains(linkId)); // linkId to be destroyed should exist
-				const auto& link = graph.links.at(linkId);
-				graph.links.erase(linkId);
+				graph.RemoveLink(linkId);
 			}
 		}
 

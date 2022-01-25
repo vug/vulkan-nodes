@@ -162,6 +162,17 @@ namespace ne1 {
 			const int id = ++counter;
 			links[id] = { id, attr1.id, attr2.id };
 		}
+
+		void RemoveLink(const int linkId) {
+			assert(links.contains(linkId)); // linkId to be destroyed should exist
+			const auto& link = links.at(linkId);
+			AttributeBase& in = attributes.at(link.end_attr);
+			AttributeBase* pIn = &in;
+			ViewerInputAttribute* attrIn = dynamic_cast<ViewerInputAttribute*>(pIn);
+			if (attrIn)
+				attrIn->optObject.reset();
+			links.erase(linkId);
+		}
 	};
 
 	class NodeEditor {
