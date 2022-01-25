@@ -12,11 +12,18 @@ namespace ne1 {
 		return ImGui::DragInt("##hidelabel", &val);
 	}
 
-	bool AttributeDrawer::operator()(MyStruct& obj) {
+	void ViewerNodeDrawer::operator()(float& val) {
+		ImGui::Text("%f", val);
+	}
+
+	void ViewerNodeDrawer::operator()(int& val) {
+		ImGui::Text("%d", &val);
+	}
+
+	void ViewerNodeDrawer::operator()(MyStruct& obj) {
 		ImGui::Text("MyStruct");
 		ImGui::Text("magnitude: %f", obj.magnitude);
 		ImGui::Text("count: %d", obj.count);
-		return false;
 	}
 
 	// -------------
@@ -57,7 +64,7 @@ namespace ne1 {
 	void ObjectEditorNode::InputAddingVisitor::operator()(MyStruct& ms) {
 		node.inputs.emplace_back(-1, "magnitude", ms.magnitude);
 		node.inputs.emplace_back(-1, "count", ms.count);
-		node.output = ObjectAttribute{ -1, "MyStruct", ms };
+		node.output = ObjectOutputAttribute{ -1, "MyStruct", ms };
 	}
 
 	void ObjectEditorNode::InputAddingVisitor::operator()(int& n) {
@@ -69,20 +76,17 @@ namespace ne1 {
 	}
 
 	void ObjectViewerNode::Draw() const {
-		if (!input)
-			return;
-
-		ImNodes::BeginInputAttribute(input->id);
-		const float labelWidth{ ImGui::CalcTextSize(input->name.c_str()).x };
-		ImGui::TextUnformatted(input->name.c_str());
-
-		ImGui::SameLine();
-		ImGui::PushItemWidth(nodeWidth - labelWidth);
-		ImGui::Text("input");
-		ImGui::PopItemWidth();
+		ImNodes::BeginInputAttribute(input.id);
+		const float labelWidth{ ImGui::CalcTextSize(input.name.c_str()).x };
+		ImGui::TextUnformatted(input.name.c_str());
 		ImNodes::EndOutputAttribute();
 
-		std::visit(AttributeDrawer{}, (*input).object);
+		if (input.optObject.has_value()) {
+			std::visit(ViewerNodeDrawer{}, input.optObject.value());
+		}
+		else {
+			ImGui::Text("no input");
+		}
 	}
 
 	// -------------
@@ -92,16 +96,16 @@ namespace ne1 {
 		graph.AddNode(nd1);
 		auto nd2{ std::make_shared<ObjectEditorNode>("MyStruct2", ms2) };
 		graph.AddNode(nd2);
-		//auto nd3{ std::make_shared<ObjectEditorNode>("MyNumber", myNum) };
-		//graph.AddNode(nd3);
+		auto nd3{ std::make_shared<ObjectEditorNode>("MyNumber", myNum) };
+		graph.AddNode(nd3);
 		auto nd4{ std::make_shared<ObjectViewerNode>() };
-		nd4->input = std::make_shared<ObjectAttribute>(-1, nd1->output.name, nd2->output.object);
+		nd4->input = ViewerInputAttribute{ -1, nd1->output.name, nd1->output.object };
 		graph.AddNode(nd4);
 
 		graph.links.emplace_back(++graph.counter, nd1->output.id, nd2->inputs[1].id);
-		//graph.links.emplace_back(++graph.counter, nd3->output.id, nd1->inputs[1].id);
+		graph.links.emplace_back(++graph.counter, nd3->output.id, nd1->inputs[1].id);
 		// TODO: call this when link created via UI. and set input to nullptr when link removed.
-		graph.links.emplace_back(++graph.counter, nd1->output.id, nd4->input->id);
+		graph.links.emplace_back(++graph.counter, nd1->output.id, nd4->input.id);
 		return graph;
 	}
 

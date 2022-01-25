@@ -1,6 +1,7 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -32,19 +33,31 @@ namespace ne1 {
 		ValueAttribute(int id, std::string name, ValueRef value) : AttributeBase{ id, name }, value{ value } {}
 	};
 
-	class ObjectAttribute : public AttributeBase {
+	class ObjectOutputAttribute : public AttributeBase {
 	public:
 		ObjectRef object;
 
-		ObjectAttribute(int id, std::string name, ObjectRef object) : AttributeBase{ id, name }, object{ object } {}
+		ObjectOutputAttribute(int id, std::string name, ObjectRef object) : AttributeBase{ id, name }, object{ object } {}
+	};
+
+	class ViewerInputAttribute : public AttributeBase {
+	public:
+		std::optional<ObjectRef> optObject;
+
+		ViewerInputAttribute(int id, std::string name) : AttributeBase{ id, name }, optObject{} {}
+		ViewerInputAttribute(int id, std::string name, ObjectRef object) : AttributeBase{ id, name }, optObject{ object } {}
 	};
 
 	struct AttributeDrawer {
 		bool operator()(float& val);
 		bool operator()(int& val);
-		bool operator()(MyStruct& obj);
 	};
 
+	struct ViewerNodeDrawer {
+		void operator()(float& val);
+		void operator()(int& val);
+		void operator()(MyStruct& obj);
+	};
 
 	class NodeBase {
 	public:
@@ -63,7 +76,7 @@ namespace ne1 {
 		ObjectRef object;
 		// Attributes that refer to Object members. Created at Node construction.
 		std::vector<ValueAttribute> inputs;
-		ObjectAttribute output;
+		ObjectOutputAttribute output;
 
 		// Used in constructor to populate inputs and outputs based on the Object
 		struct InputAddingVisitor {
@@ -80,9 +93,9 @@ namespace ne1 {
 
 	class ObjectViewerNode : public NodeBase {
 	public:
-		std::shared_ptr<ObjectAttribute> input{};
+		ViewerInputAttribute input;
 
-		ObjectViewerNode() : NodeBase{ -1, "Viewer" } {}
+		ObjectViewerNode() : NodeBase{ -1, "Viewer" }, input{ -1, "input" } {}
 		virtual void Draw() const override;
 	};
 
@@ -104,8 +117,8 @@ namespace ne1 {
 		}
 		void AddNode(std::shared_ptr<ObjectViewerNode> node) {
 			node->id = ++counter;
-			if (node->input)
-				node->input->id = ++counter;
+			if (node->input.optObject.has_value())
+				node->input.id = ++counter;
 			nodes.push_back(node);
 		}
 	};
