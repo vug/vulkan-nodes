@@ -21,11 +21,15 @@ namespace ne1 {
 		Opt2,
 	};
 
+	struct YourStruct {
+		YourEnum option;
+		int num;
+	};
+
 	// Cannot have a Value& in Attribute but Value can be made of references!
-	using ValueRef = std::variant<std::reference_wrapper<int>, std::reference_wrapper<float>>;
 	using ValueRef = std::variant<std::reference_wrapper<int>, std::reference_wrapper<float>, std::reference_wrapper<YourEnum>>;
 	// Objects that can be hold/represented by Nodes
-	using ObjectRef = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
+	using ObjectRef = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<YourStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
 
 	class AttributeBase {
 	public:
@@ -69,6 +73,7 @@ namespace ne1 {
 		void operator()(float& val);
 		void operator()(int& val);
 		void operator()(MyStruct& obj);
+		void operator()(YourStruct& obj);
 	};
 
 	class NodeBase {
@@ -94,6 +99,7 @@ namespace ne1 {
 		struct InputAddingVisitor {
 			ObjectEditorNode& node;
 			void operator()(MyStruct& ms);
+			void operator()(YourStruct& ms);
 			void operator()(int& num);
 			void operator()(float& num);
 		};

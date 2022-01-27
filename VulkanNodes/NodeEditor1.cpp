@@ -34,6 +34,13 @@ namespace ne1 {
 		ImGui::Text("count: %d", obj.count);
 	}
 
+	void ViewerNodeDrawer::operator()(YourStruct& obj) {
+		ImGui::Text("YourStruct");
+		const char* items[] = { "Opt1", "Opt2" };
+		ImGui::Text("option: %s", items[static_cast<int>(obj.option)]);
+		ImGui::Text("num: %d", obj.num);
+	}
+
 	// -------------
 
 	ObjectEditorNode::ObjectEditorNode(std::string title, ObjectRef obj)
@@ -73,6 +80,12 @@ namespace ne1 {
 		node.inputs.emplace_back(-1, "magnitude", ms.magnitude);
 		node.inputs.emplace_back(-1, "count", ms.count);
 		node.output = ObjectOutputAttribute{ -1, "MyStruct", ms };
+	}
+
+	void ObjectEditorNode::InputAddingVisitor::operator()(YourStruct& ys) {
+		node.inputs.emplace_back(-1, "option", ys.option);
+		node.inputs.emplace_back(-1, "num", ys.num);
+		node.output = ObjectOutputAttribute{ -1, "MyStruct", ys };
 	}
 
 	void ObjectEditorNode::InputAddingVisitor::operator()(int& n) {
@@ -150,6 +163,15 @@ namespace ne1 {
 					MyStruct* ms = new MyStruct{};
 					MyStruct& ms2 = *ms;
 					auto node{ std::make_shared<ObjectEditorNode>("MyStruct", ms2) };
+					graph.AddNode(node);
+					ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
+				}
+				if (ImGui::MenuItem("YourStruct")) {
+					// TODO: this is horrible, memory-leaky way of letting nodes retain objects
+					// instead let the Node own the struct instead of referring to it.
+					YourStruct* pObj = new YourStruct{};
+					YourStruct& obj = *pObj;
+					auto node{ std::make_shared<ObjectEditorNode>("YourStruct", obj) };
 					graph.AddNode(node);
 					ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
 				}
