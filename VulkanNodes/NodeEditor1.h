@@ -16,8 +16,14 @@ namespace ne1 {
 		float magnitude;
 	};
 
+	enum class YourEnum {
+		Opt1,
+		Opt2,
+	};
+
 	// Cannot have a Value& in Attribute but Value can be made of references!
 	using ValueRef = std::variant<std::reference_wrapper<int>, std::reference_wrapper<float>>;
+	using ValueRef = std::variant<std::reference_wrapper<int>, std::reference_wrapper<float>, std::reference_wrapper<YourEnum>>;
 	// Objects that can be hold/represented by Nodes
 	using ObjectRef = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
 
@@ -56,6 +62,7 @@ namespace ne1 {
 	struct AttributeDrawer {
 		bool operator()(float& val);
 		bool operator()(int& val);
+		bool operator()(YourEnum& val);
 	};
 
 	struct ViewerNodeDrawer {

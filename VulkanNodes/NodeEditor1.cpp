@@ -12,6 +12,14 @@ namespace ne1 {
 		return ImGui::DragInt("##hidelabel", &val);
 	}
 
+	bool AttributeDrawer::operator()(YourEnum& val) {
+		const char* items[] = { "Opt1", "Opt2" };
+		int choice = static_cast<int>(val);
+		bool hasModified = ImGui::Combo("combo", &choice, items, IM_ARRAYSIZE(items));
+		val = static_cast<YourEnum>(choice);
+		return hasModified;
+	}
+
 	void ViewerNodeDrawer::operator()(float& val) {
 		ImGui::Text("%f", val);
 	}
