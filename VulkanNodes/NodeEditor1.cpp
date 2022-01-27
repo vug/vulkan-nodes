@@ -85,7 +85,7 @@ namespace ne1 {
 	void ObjectEditorNode::InputAddingVisitor::operator()(YourStruct& ys) {
 		node.inputs.emplace_back(-1, "option", ys.option);
 		node.inputs.emplace_back(-1, "num", ys.num);
-		node.output = ObjectOutputAttribute{ -1, "MyStruct", ys };
+		node.output = ObjectOutputAttribute{ -1, "YourStruct", ys };
 	}
 
 	void ObjectEditorNode::InputAddingVisitor::operator()(int& n) {
@@ -143,7 +143,7 @@ namespace ne1 {
 
 	void NodeEditor::Draw() {
 		ImGui::Begin("Node Editor");
-		ImGui::TextUnformatted("CTRL+s saves node positions. CTRL+l loads them.");
+		ImGui::TextUnformatted("A: add node. CTRL+s: save node pos. CTRL+l: load node pos.");
 		// Hack for learning key codes
 		//for (int key = 0; key < 200; key++) { if (ImGui::IsKeyDown(key)) ImGui::Text("key: %d", key); }
 		ImNodes::BeginNodeEditor();
@@ -179,6 +179,11 @@ namespace ne1 {
 					graph.AddNode(node);
 					ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
 				}
+				if (ImGui::MenuItem("Viewer")) {
+					auto node{ std::make_shared<ObjectViewerNode>() };
+					graph.AddNode(node);
+					ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
+				}
 
 				ImGui::EndPopup();
 			}
@@ -202,6 +207,7 @@ namespace ne1 {
 			ImNodes::Link(id, link.start_attr, link.end_attr);
 		}
 
+		// TODO: fix save/load. It was just saving positions of a fixed graph
 		const char* editorStateSaveFile{ "editor_state.ini" };
 		ImGuiIO& io{ ImGui::GetIO() };
 		if (io.KeyCtrl && ImGui::IsKeyPressed(83, false)) {
