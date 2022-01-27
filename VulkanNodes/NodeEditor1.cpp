@@ -119,6 +119,8 @@ namespace ne1 {
 	void NodeEditor::Draw() {
 		ImGui::Begin("Node Editor");
 		ImGui::TextUnformatted("CTRL+s saves node positions. CTRL+l loads them.");
+		// Hack for learning key codes
+		//for (int key = 0; key < 200; key++) { if (ImGui::IsKeyDown(key)) ImGui::Text("key: %d", key); }
 		ImNodes::BeginNodeEditor();
 
 		for (const auto& nodePtr : graph.nodes) {
