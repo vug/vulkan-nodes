@@ -123,6 +123,35 @@ namespace ne1 {
 		//for (int key = 0; key < 200; key++) { if (ImGui::IsKeyDown(key)) ImGui::Text("key: %d", key); }
 		ImNodes::BeginNodeEditor();
 
+		// Adding Nodes via UI
+		{
+			const bool shouldOpenPopup = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
+				ImNodes::IsEditorHovered() &&
+				ImGui::IsKeyReleased(65);
+			ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
+
+			if (!ImGui::IsAnyItemHovered() && shouldOpenPopup)
+				ImGui::OpenPopup("Add Object");
+
+			if (ImGui::BeginPopup("Add Object")) {
+				const ImVec2 clickPos = ImGui::GetMousePosOnOpeningCurrentPopup();
+
+				if (ImGui::MenuItem("MyStruct")) {
+					// TODO: this is horrible, memory-leaky way of letting nodes retain objects
+					// instead let the Node own the struct instead of referring to it.
+					MyStruct* ms = new MyStruct{};
+					MyStruct& ms2 = *ms;
+					auto node{ std::make_shared<ObjectEditorNode>("MyStruct", ms2) };
+					graph.AddNode(node);
+					ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
+				}
+
+				ImGui::EndPopup();
+			}
+
+			ImGui::PopStyleVar();
+		}
+
 		for (const auto& nodePtr : graph.nodes) {
 			const auto& node{ *nodePtr };
 			ImNodes::BeginNode(node.id);
