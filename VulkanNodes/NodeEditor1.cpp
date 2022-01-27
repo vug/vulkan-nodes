@@ -112,6 +112,10 @@ namespace ne1 {
 
 	// -------------
 	Graph NodeEditor::MakeTestGraph() {
+		static MyStruct ms1{ 7, 8.5 };
+		static MyStruct ms2{ 4, 1.5 };
+		static int myNum{ 66 };
+
 		Graph graph{};
 		auto nd1{ std::make_shared<ObjectEditorNode>("MyStruct1", ms1) };
 		graph.AddNode(nd1);
@@ -135,7 +139,7 @@ namespace ne1 {
 		io.LinkDetachWithModifierClick.Modifier = &ImGui::GetIO().KeyCtrl;
 	}
 
-	NodeEditor::NodeEditor() : NodeEditor{ MakeTestGraph() } {}
+	NodeEditor::NodeEditor() : NodeEditor{ Graph{} } {}
 
 	void NodeEditor::Draw() {
 		ImGui::Begin("Node Editor");

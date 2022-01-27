@@ -35,7 +35,7 @@ int main() {
 	vkDestroyShaderModule(vc.device, frag, nullptr);
 
 	const ImGuiHelper imGuiHelper{ vc };
-	ne1::NodeEditor nodeEditor{};
+	ne1::NodeEditor nodeEditor{ ne1::NodeEditor::MakeTestGraph() };
 	//ne2::NodeEditor nodeEditor;
 
 	while (!win.ShouldClose()) {

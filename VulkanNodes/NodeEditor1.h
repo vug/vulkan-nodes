@@ -193,16 +193,13 @@ namespace ne1 {
 		NodeEditor();
 		NodeEditor(const Graph& graph);
 		void Draw();
+
+		static Graph MakeTestGraph();
 	public:
 		Graph graph{};
 
-		// TODO: Store actual values to be edited somewhere else
-		MyStruct ms1{ 7, 8.5 };
-		MyStruct ms2{ 4, 1.5 };
-		int myNum{ 66 };
 	private:
 		ImNodesEditorContext* context = ImNodes::EditorContextCreate();
-		Graph MakeTestGraph();
 	};
 
 } // namespace ne1
