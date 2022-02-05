@@ -76,24 +76,24 @@ namespace ne1 {
 		}
 	}
 
-	void ObjectRefEditorNode::InputAddingVisitor::operator()(MyStruct& ms) {
-		node.inputs.emplace_back(-1, "magnitude", ms.magnitude);
-		node.inputs.emplace_back(-1, "count", ms.count);
-		node.output = ObjectOutputAttribute{ -1, "MyStruct", ms };
+	void InputAddingVisitor::operator()(MyStruct& ms) {
+		inputs.emplace_back(-1, "magnitude", ms.magnitude);
+		inputs.emplace_back(-1, "count", ms.count);
+		output = ObjectOutputAttribute{ -1, "MyStruct", ms };
 	}
 
-	void ObjectRefEditorNode::InputAddingVisitor::operator()(YourStruct& ys) {
-		node.inputs.emplace_back(-1, "option", ys.option);
-		node.inputs.emplace_back(-1, "num", ys.num);
-		node.output = ObjectOutputAttribute{ -1, "YourStruct", ys };
+	void InputAddingVisitor::operator()(YourStruct& ys) {
+		inputs.emplace_back(-1, "option", ys.option);
+		inputs.emplace_back(-1, "num", ys.num);
+		output = ObjectOutputAttribute{ -1, "YourStruct", ys };
 	}
 
-	void ObjectRefEditorNode::InputAddingVisitor::operator()(int& n) {
-		node.inputs.emplace_back(-1, "int", n);
+	void InputAddingVisitor::operator()(int& n) {
+		inputs.emplace_back(-1, "int", n);
 	}
 
-	void ObjectRefEditorNode::InputAddingVisitor::operator()(float& x) {
-		node.inputs.emplace_back(-1, "float", x);
+	void InputAddingVisitor::operator()(float& x) {
+		inputs.emplace_back(-1, "float", x);
 	}
 
 	void ObjectViewerNode::Draw() const {

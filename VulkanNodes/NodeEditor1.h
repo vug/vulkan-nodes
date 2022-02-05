@@ -87,6 +87,16 @@ namespace ne1 {
 		virtual void Draw() const = 0;
 	};
 
+	// Used in constructor to populate inputs and outputs based on the Object
+	struct InputAddingVisitor {
+		std::vector<ValueAttribute>& inputs;
+		ObjectOutputAttribute& output;
+		void operator()(MyStruct& ms);
+		void operator()(YourStruct& ms);
+		void operator()(int& num);
+		void operator()(float& num);
+	};
+
 	class ObjectRefEditorNode : public NodeBase {
 	public:
 		// Object that is populated using UI
@@ -95,17 +105,9 @@ namespace ne1 {
 		std::vector<ValueAttribute> inputs;
 		ObjectOutputAttribute output;
 
-		// Used in constructor to populate inputs and outputs based on the Object
-		struct InputAddingVisitor {
-			ObjectRefEditorNode& node;
-			void operator()(MyStruct& ms);
-			void operator()(YourStruct& ms);
-			void operator()(int& num);
-			void operator()(float& num);
-		};
-		InputAddingVisitor adder{ *this };
-
 		ObjectRefEditorNode(std::string title, ObjectRef obj);
+
+		InputAddingVisitor adder{ inputs, output };
 
 		virtual void Draw() const override;
 	};
