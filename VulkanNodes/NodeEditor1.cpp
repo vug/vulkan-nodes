@@ -43,12 +43,12 @@ namespace ne1 {
 
 	// -------------
 
-	ObjectEditorNode::ObjectEditorNode(std::string title, ObjectRef obj)
+	ObjectRefEditorNode::ObjectRefEditorNode(std::string title, ObjectRef obj)
 		: NodeBase{ -1, title }, object{ obj }, output{ -1, "output", obj } {
 		std::visit(adder, obj);
 	}
 
-	void ObjectEditorNode::Draw() const {
+	void ObjectRefEditorNode::Draw() const {
 		for (auto& attr : inputs) {
 			ImNodes::BeginInputAttribute(attr.id);
 			const float labelWidth{ ImGui::CalcTextSize(attr.name.c_str()).x };
@@ -76,23 +76,23 @@ namespace ne1 {
 		}
 	}
 
-	void ObjectEditorNode::InputAddingVisitor::operator()(MyStruct& ms) {
+	void ObjectRefEditorNode::InputAddingVisitor::operator()(MyStruct& ms) {
 		node.inputs.emplace_back(-1, "magnitude", ms.magnitude);
 		node.inputs.emplace_back(-1, "count", ms.count);
 		node.output = ObjectOutputAttribute{ -1, "MyStruct", ms };
 	}
 
-	void ObjectEditorNode::InputAddingVisitor::operator()(YourStruct& ys) {
+	void ObjectRefEditorNode::InputAddingVisitor::operator()(YourStruct& ys) {
 		node.inputs.emplace_back(-1, "option", ys.option);
 		node.inputs.emplace_back(-1, "num", ys.num);
 		node.output = ObjectOutputAttribute{ -1, "YourStruct", ys };
 	}
 
-	void ObjectEditorNode::InputAddingVisitor::operator()(int& n) {
+	void ObjectRefEditorNode::InputAddingVisitor::operator()(int& n) {
 		node.inputs.emplace_back(-1, "int", n);
 	}
 
-	void ObjectEditorNode::InputAddingVisitor::operator()(float& x) {
+	void ObjectRefEditorNode::InputAddingVisitor::operator()(float& x) {
 		node.inputs.emplace_back(-1, "float", x);
 	}
 
@@ -117,11 +117,11 @@ namespace ne1 {
 		static int myNum{ 66 };
 
 		Graph graph{};
-		auto nd1{ std::make_shared<ObjectEditorNode>("MyStruct1", ms1) };
+		auto nd1{ std::make_shared<ObjectRefEditorNode>("MyStruct1", ms1) };
 		graph.AddNode(nd1);
-		auto nd2{ std::make_shared<ObjectEditorNode>("MyStruct2", ms2) };
+		auto nd2{ std::make_shared<ObjectRefEditorNode>("MyStruct2", ms2) };
 		graph.AddNode(nd2);
-		auto nd3{ std::make_shared<ObjectEditorNode>("MyNumber", myNum) };
+		auto nd3{ std::make_shared<ObjectRefEditorNode>("MyNumber", myNum) };
 		graph.AddNode(nd3);
 		auto nd4{ std::make_shared<ObjectViewerNode>() };
 		graph.AddNode(nd4);
@@ -166,7 +166,7 @@ namespace ne1 {
 					// instead let the Node own the struct instead of referring to it.
 					MyStruct* ms = new MyStruct{};
 					MyStruct& ms2 = *ms;
-					auto node{ std::make_shared<ObjectEditorNode>("MyStruct", ms2) };
+					auto node{ std::make_shared<ObjectRefEditorNode>("MyStruct", ms2) };
 					graph.AddNode(node);
 					ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
 				}
@@ -175,7 +175,7 @@ namespace ne1 {
 					// instead let the Node own the struct instead of referring to it.
 					YourStruct* pObj = new YourStruct{};
 					YourStruct& obj = *pObj;
-					auto node{ std::make_shared<ObjectEditorNode>("YourStruct", obj) };
+					auto node{ std::make_shared<ObjectRefEditorNode>("YourStruct", obj) };
 					graph.AddNode(node);
 					ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
 				}

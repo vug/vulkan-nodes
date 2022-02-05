@@ -87,7 +87,7 @@ namespace ne1 {
 		virtual void Draw() const = 0;
 	};
 
-	class ObjectEditorNode : public NodeBase {
+	class ObjectRefEditorNode : public NodeBase {
 	public:
 		// Object that is populated using UI
 		ObjectRef object;
@@ -97,7 +97,7 @@ namespace ne1 {
 
 		// Used in constructor to populate inputs and outputs based on the Object
 		struct InputAddingVisitor {
-			ObjectEditorNode& node;
+			ObjectRefEditorNode& node;
 			void operator()(MyStruct& ms);
 			void operator()(YourStruct& ms);
 			void operator()(int& num);
@@ -105,9 +105,13 @@ namespace ne1 {
 		};
 		InputAddingVisitor adder{ *this };
 
-		ObjectEditorNode(std::string title, ObjectRef obj);
+		ObjectRefEditorNode(std::string title, ObjectRef obj);
+
 		virtual void Draw() const override;
 	};
+
+	//template<typename T>
+	//ObjectEditorNode(std::string title);
 
 	class ObjectViewerNode : public NodeBase {
 	public:
@@ -128,7 +132,7 @@ namespace ne1 {
 		std::unordered_map<int, Link> links;
 		std::unordered_map<int, std::reference_wrapper<AttributeBase>> attributes;
 		int counter{};
-		void AddNode(std::shared_ptr<ObjectEditorNode> node) {
+		void AddNode(std::shared_ptr<ObjectRefEditorNode> node) {
 			node->id = ++counter;
 			for (auto& attr : node->inputs) {
 				attr.id = ++counter;
