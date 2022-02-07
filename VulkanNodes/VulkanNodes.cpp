@@ -1,4 +1,5 @@
 ﻿#include "VulkanNodes.h"
+#include "NodeEditor.h"
 #include "NodeEditor1.h"
 #include "NodeEditor2.h"
 
@@ -36,8 +37,8 @@ int main() {
 
 	const ImGuiHelper imGuiHelper{ vc };
 	//ne1::NodeEditor nodeEditor{ ne1::NodeEditor::MakeTestGraph() };
-	ne1::NodeEditor nodeEditor{};
-	//ne2::NodeEditor nodeEditor;
+	//ne1::NodeEditor nodeEditor{};
+	ne::NodeEditor nodeEditor{ ne::NodeEditor::MakeTestGraph() };
 
 	while (!win.ShouldClose()) {
 		win.PollEvents();
