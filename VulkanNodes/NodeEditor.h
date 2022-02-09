@@ -28,17 +28,20 @@ namespace ne {
 
 	class AttributeBase {
 	public:
+		// Members required by ImNode
 		int id{ -1 };
 		std::string name;
 
 		AttributeBase(std::string name) : name{ name } {}
 
+		// Logic to draw Attribute UI in a Node body
 		virtual bool Draw() const = 0;
 	};
 
 	// Cannot have a Value& in Attribute but Value can be made of references!
 	using ValueRef = std::variant<std::reference_wrapper<int>, std::reference_wrapper<float>, std::reference_wrapper<YourEnum>>;
 
+	// Visitor that draws UI for ValueAttribute editing
 	struct AttributeDrawer {
 		bool operator()(float& val);
 		bool operator()(int& val);
@@ -53,13 +56,13 @@ namespace ne {
 			: AttributeBase{ title }, value{ value } {}
 
 		bool Draw() const override;
-
 	};
 
 	// ---------
 
 	class NodeBase {
 	public:
+		// Members required by ImNodes
 		int id{ -1 };
 		std::string title;
 
@@ -73,6 +76,8 @@ namespace ne {
 		void Draw();
 
 		virtual void DrawContent() const = 0;
+
+		// helper to assign unique Ids to every attribute of a node
 		virtual std::vector<std::reference_wrapper<int>> GetAllAttributeIds() = 0;
 	};
 
@@ -87,17 +92,20 @@ namespace ne {
 		// TODO: Define ObjectOutputAttribute
 		//ObjectOutputAttribute output;
 
+		// initialize a default object
 		ObjectEditorNode(std::string title)
 			: NodeBase{ title }, object{} { 
 			AddInputs(object);
 		}
 
+		// construct an object with given arguments
 		template<typename... Args>
 		ObjectEditorNode(std::string title, Args... args) 
 			: NodeBase{ title }, object{ args... } {
 			AddInputs(object);
 		}
 
+		// move provided object
 		ObjectEditorNode(std::string title, TObj&& obj)
 			: NodeBase{ title }, object{std::move(obj)} {
 			AddInputs(object);
