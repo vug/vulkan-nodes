@@ -68,11 +68,7 @@ namespace ne {
 
 	Graph NodeEditor::MakeTestGraph() {
 		Graph graph{};
-		auto nd2 = std::make_shared<ne::ObjectEditorNode<ne::MyStruct>>("Node1", 3, 4.0f);
-		graph.nodes.push_back(nd2);
-		nd2->id = 1;
-		nd2->inputs[0].id = 2;
-		nd2->inputs[1].id = 3;
+		graph.AddNode<ne::ObjectEditorNode<ne::MyStruct>>("Node2", 2, 3.0f);
 		return graph;
 	}
 }

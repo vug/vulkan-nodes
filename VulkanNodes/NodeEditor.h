@@ -2,6 +2,7 @@
 
 #include "dependencies/imnodes.h"
 
+#include <cassert>
 #include <memory>
 #include <string>
 #include <variant>
@@ -27,10 +28,10 @@ namespace ne {
 
 	class AttributeBase {
 	public:
-		int id;
+		int id{ -1 };
 		std::string name;
 
-		AttributeBase(int id, std::string name) : id{ id }, name{ name } {}
+		AttributeBase(std::string name) : name{ name } {}
 
 		virtual bool Draw() const = 0;
 	};
@@ -48,8 +49,8 @@ namespace ne {
 	public:
 		ValueRef value;
 
-		ValueAttribute(int id, std::string title, ValueRef value)
-			: AttributeBase{ id, title }, value{ value } {}
+		ValueAttribute(std::string title, ValueRef value)
+			: AttributeBase{ title }, value{ value } {}
 
 		bool Draw() const override;
 
@@ -59,26 +60,27 @@ namespace ne {
 
 	class NodeBase {
 	public:
-		int id;
+		int id{ -1 };
 		std::string title;
 
 		const float nodeWidth{ 100 };
 
 		// Note that, when virtual Draw method is added to NodeBase it is not an aggregate class anymore
 		// hence it cannot be aggregate initialized, i.e. NodeBase { -1, "title" } implicit constructor cease to exist
-		NodeBase(int id, std::string title)
-			: id{id}, title{title} {}
+		NodeBase(std::string title)
+			: title{title} {}
 
 		void Draw();
 
 		virtual void DrawContent() const = 0;
+		virtual std::vector<std::reference_wrapper<int>> GetAllAttributeIds() = 0;
 	};
 
 	template <typename TObj>
 	class ObjectEditorNode : public NodeBase {
 	public:
 		// Object that is populated using UI
-		TObj object;
+		TObj object{};
 
 		// Attributes that refer to Object members. Created at Node construction.
 		std::vector<ValueAttribute> inputs;
@@ -86,18 +88,18 @@ namespace ne {
 		//ObjectOutputAttribute output;
 
 		ObjectEditorNode(std::string title)
-			: NodeBase{-1, title}, object{} { 
+			: NodeBase{ title }, object{} { 
 			AddInputs(object);
 		}
 
 		template<typename... Args>
 		ObjectEditorNode(std::string title, Args... args) 
-			: NodeBase{ -1, title }, object{ args... } {
+			: NodeBase{ title }, object{ args... } {
 			AddInputs(object);
 		}
 
 		ObjectEditorNode(std::string title, TObj&& obj)
-			: NodeBase{ -1, title }, object{std::move(obj)} {
+			: NodeBase{ title }, object{std::move(obj)} {
 			AddInputs(object);
 		}
 
@@ -116,22 +118,51 @@ namespace ne {
 				ImNodes::EndOutputAttribute();
 			}
 		}
+
+		std::vector<std::reference_wrapper<int>> GetAllAttributeIds() override {
+			std::vector<std::reference_wrapper<int>> ids;
+			for (AttributeBase& attr : inputs)
+				ids.push_back(attr.id);
+			return ids;
+		}
 	private:
 		void AddInputs(MyStruct& myStruct) {
-			inputs.emplace_back(-1, "count", myStruct.count);
-			inputs.emplace_back(-1, "magnitude", myStruct.magnitude);
+			inputs.emplace_back("count", myStruct.count);
+			inputs.emplace_back("magnitude", myStruct.magnitude);
 		}
 		void AddInputs(YourStruct& yourStruct) {
-			inputs.emplace_back(-1, "option", yourStruct.option);
-			inputs.emplace_back(-1, "num", yourStruct.num);
+			inputs.emplace_back("option", yourStruct.option);
+			inputs.emplace_back("num", yourStruct.num);
 		}
 	};
 
 	// ----------------
 
+	template<typename T>
+	concept IsNode = std::is_base_of<NodeBase, T>::value;
+
 	class Graph {
 	public:
 		std::vector<std::shared_ptr<NodeBase>> nodes;
+		int counter{};
+
+		void AddNode(std::shared_ptr<NodeBase> nd) {
+			assert(nd->id != -1); // node should be given an id
+			for (std::reference_wrapper<int>& idRef : nd->GetAllAttributeIds())
+				assert(idRef.get() != -1);  // all attributes of a node should be given an id
+			nodes.push_back(nd);
+		}
+
+		template<IsNode TNode, typename... Args>
+		void AddNode(Args... args) {
+			std::shared_ptr<TNode> nd = std::make_shared<TNode>(args...);
+			nd->id = counter++;
+			nodes.push_back(nd);
+
+			for (auto& idRef : nd->GetAllAttributeIds())
+				idRef.get() = counter++;
+
+		}
 	};
 
 	// ----------------
