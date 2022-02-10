@@ -49,5 +49,7 @@ namespace ne {
 
 	private:
 		ImNodesEditorContext* context = ImNodes::EditorContextCreate();
+
+		void DrawPopupMenu();
 	};
 }

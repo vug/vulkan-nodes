@@ -19,6 +19,8 @@ namespace ne {
 		//for (int key = 0; key < 200; key++) { if (ImGui::IsKeyDown(key)) ImGui::Text("key: %d", key); }
 		ImNodes::BeginNodeEditor();
 
+		DrawPopupMenu();
+
 		for (const auto& nd : graph.nodes) {
 			nd->Draw();
 		}
@@ -29,11 +31,42 @@ namespace ne {
 		ImGui::End();
 	}
 
+	void NodeEditor::DrawPopupMenu() {
+		const bool shouldOpenPopup = ImGui::IsWindowFocused(ImGuiFocusedFlags_RootAndChildWindows) &&
+			ImNodes::IsEditorHovered() &&
+			ImGui::IsKeyReleased(65);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(8.f, 8.f));
+
+		if (!ImGui::IsAnyItemHovered() && shouldOpenPopup)
+			ImGui::OpenPopup("Add Object");
+
+		if (ImGui::BeginPopup("Add Object")) {
+			const ImVec2 clickPos = ImGui::GetMousePosOnOpeningCurrentPopup();
+
+			if (ImGui::MenuItem("MyStruct")) {
+				auto node = graph.AddNode<ObjectEditorNode<MyStruct>>("MyStruct");
+				ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
+			}
+			if (ImGui::MenuItem("YourStruct")) {
+				auto node = graph.AddNode<ObjectEditorNode<YourStruct>>("MyStruct");
+				ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
+			}
+			if (ImGui::MenuItem("Viewer")) {
+				auto node = graph.AddNode<ObjectViewerNode>();
+				ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
+			}
+
+			ImGui::EndPopup();
+		}
+
+		ImGui::PopStyleVar();
+	}
+
 	Graph NodeEditor::MakeTestGraph() {
 		Graph graph{};
-		auto nd1 = graph.AddNode<ne::ObjectEditorNode<ne::MyStruct>>("Node1", 2, 3.0f);
-		auto nd2 = graph.AddNode<ne::ObjectEditorNode<ne::YourStruct>>("Node2", ne::YourEnum::Opt2, 4);
-		auto nd3 = graph.AddNode<ne::ObjectViewerNode>();
+		auto nd1 = graph.AddNode<ObjectEditorNode<MyStruct>>("Node1", 2, 3.0f);
+		auto nd2 = graph.AddNode<ObjectEditorNode<YourStruct>>("Node2", YourEnum::Opt2, 4);
+		auto nd3 = graph.AddNode<ObjectViewerNode>();
 		nd3->input.optObject = nd2->output.object;
 		return graph;
 	}
