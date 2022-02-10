@@ -40,6 +40,48 @@ namespace ne {
 
 	// -------
 
+	void ObjectViewerNode::Drawer::operator()(float& val) {
+		ImGui::Text("%f", val);
+	}
+
+	void ObjectViewerNode::Drawer::operator()(int& val) {
+		ImGui::Text("%d", &val);
+	}
+
+	void ObjectViewerNode::Drawer::operator()(MyStruct& obj) {
+		ImGui::Text("MyStruct");
+		ImGui::Text("count: %d", obj.count);
+		ImGui::Text("magnitude: %f", obj.magnitude);
+	}
+
+	void ObjectViewerNode::Drawer::operator()(YourStruct& obj) {
+		ImGui::Text("YourStruct");
+		const char* items[] = { "Opt1", "Opt2" };
+		ImGui::Text("option: %s", items[static_cast<int>(obj.option)]);
+		ImGui::Text("num: %d", obj.num);
+	}
+
+	void ObjectViewerNode::DrawContent() const {
+		ImNodes::BeginInputAttribute(input.id);
+		ImGui::Text(input.name.c_str());
+		input.Draw();
+		ImNodes::EndInputAttribute();
+
+		if (input.optObject.has_value()) {
+			std::visit(Drawer{}, input.optObject.value());
+		}
+		else {
+			ImGui::Text("no input");
+		}
+	}
+
+	std::vector<std::reference_wrapper<int>> ObjectViewerNode::GetAllAttributeIds() {
+		std::vector<std::reference_wrapper<int>> ids = { input.id };
+		return ids;
+	}
+
+	// -------
+
 	NodeEditor::NodeEditor(const Graph& graph) : graph{ graph } {
 		ImNodes::EditorContextSet(context);
 		ImNodes::PushAttributeFlag(ImNodesAttributeFlags_EnableLinkDetachWithDragClick);
@@ -68,8 +110,10 @@ namespace ne {
 
 	Graph NodeEditor::MakeTestGraph() {
 		Graph graph{};
-		graph.AddNode<ne::ObjectEditorNode<ne::MyStruct>>("Node1", 2, 3.0f);
-		graph.AddNode<ne::ObjectEditorNode<ne::YourStruct>>("Node2", ne::YourEnum::Opt2, 4);
+		auto nd1 = graph.AddNode<ne::ObjectEditorNode<ne::MyStruct>>("Node1", 2, 3.0f);
+		auto nd2 = graph.AddNode<ne::ObjectEditorNode<ne::YourStruct>>("Node2", ne::YourEnum::Opt2, 4);
+		auto nd3 = graph.AddNode<ne::ObjectViewerNode>();
+		nd3->input.optObject = nd2->output.object;
 		return graph;
 	}
 }

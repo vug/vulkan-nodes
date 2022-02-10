@@ -4,6 +4,7 @@
 
 #include <cassert>
 #include <memory>
+#include <optional>
 #include <string>
 #include <variant>
 #include <vector>
@@ -71,6 +72,21 @@ namespace ne {
 		}
 	};
 
+	using ObjectRef = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<YourStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
+
+	class ObjectInputAttribute : public AttributeBase {
+	public:
+		std::optional<ObjectRef> optObject;
+
+		ObjectInputAttribute() : AttributeBase{ "input" }, optObject{} {}
+		ObjectInputAttribute(ObjectRef object) : AttributeBase{ "input" }, optObject{object} {}
+
+		bool Draw() const {
+			return false;
+		}
+	};
+
+
 	// ---------
 
 	class NodeBase {
@@ -102,7 +118,6 @@ namespace ne {
 
 		// Attributes that refer to Object members. Created at Node construction.
 		std::vector<ValueAttribute> inputs;
-		// TODO: Define ObjectOutputAttribute and ObjectInputAttribute (former is a reference, latter is an optional reference to a TObj)
 		ObjectOutputAttribute<TObj> output;
 
 		// initialize a default object
@@ -137,7 +152,6 @@ namespace ne {
 
 				ImGui::PopItemWidth();
 				ImNodes::EndInputAttribute();
-			
 			}
 
 			{
@@ -168,6 +182,25 @@ namespace ne {
 		}
 	};
 
+
+	class ObjectViewerNode : public NodeBase {
+	public:
+		ObjectInputAttribute input;
+
+		ObjectViewerNode() : NodeBase{ "Viewer" } {}
+
+		struct Drawer {
+			void operator()(float& val);
+			void operator()(int& val);
+			void operator()(MyStruct& obj);
+			void operator()(YourStruct& obj);
+		};
+
+		void DrawContent() const override;
+
+		std::vector<std::reference_wrapper<int>> GetAllAttributeIds() override;
+	};
+
 	// ----------------
 
 	template<typename T>
@@ -186,14 +219,14 @@ namespace ne {
 		}
 
 		template<IsNode TNode, typename... Args>
-		void AddNode(Args... args) {
+		std::shared_ptr<TNode> AddNode(Args... args) {
 			std::shared_ptr<TNode> nd = std::make_shared<TNode>(args...);
 			nd->id = counter++;
 			nodes.push_back(nd);
 
 			for (auto& idRef : nd->GetAllAttributeIds())
 				idRef.get() = counter++;
-
+			return nd;
 		}
 	};
 
