@@ -20,12 +20,9 @@ namespace ne {
 		ImNodes::BeginNodeEditor();
 
 		DrawPopupMenu();
+		DrawNodesAndLinks();
+		SaveLoadGraph();
 
-		for (const auto& nd : graph.nodes) {
-			nd->Draw();
-		}
-
-		ImNodes::MiniMap();
 		ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
 		ImNodes::EndNodeEditor();
 		ImGui::End();
@@ -48,7 +45,7 @@ namespace ne {
 				ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
 			}
 			if (ImGui::MenuItem("YourStruct")) {
-				auto node = graph.AddNode<ObjectEditorNode<YourStruct>>("MyStruct");
+				auto node = graph.AddNode<ObjectEditorNode<YourStruct>>("YourStruct");
 				ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
 			}
 			if (ImGui::MenuItem("Viewer")) {
@@ -60,6 +57,28 @@ namespace ne {
 		}
 
 		ImGui::PopStyleVar();
+	}
+
+	void NodeEditor::DrawNodesAndLinks() {
+		for (const auto& nd : graph.nodes) {
+			nd->Draw();
+		}
+		// TODO: bring Links
+		//for (const auto& [id, link] : graph.links) {
+		//	ImNodes::Link(id, link.start_attr, link.end_attr);
+		//}
+	}
+
+	void NodeEditor::SaveLoadGraph() {
+		// TODO: fix save/load. It is just saving positions of a fixed graph
+		const char* editorStateSaveFile{ "editor_state.ini" };
+		ImGuiIO& io{ ImGui::GetIO() };
+		if (io.KeyCtrl && ImGui::IsKeyPressed(83, false)) {
+			ImNodes::SaveCurrentEditorStateToIniFile(editorStateSaveFile);
+		}
+		else if (io.KeyCtrl && ImGui::IsKeyPressed(76, false)) {
+			ImNodes::LoadCurrentEditorStateFromIniFile(editorStateSaveFile);
+		}
 	}
 
 	Graph NodeEditor::MakeTestGraph() {

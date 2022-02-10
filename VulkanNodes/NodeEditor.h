@@ -51,5 +51,7 @@ namespace ne {
 		ImNodesEditorContext* context = ImNodes::EditorContextCreate();
 
 		void DrawPopupMenu();
+		void DrawNodesAndLinks();
+		void SaveLoadGraph();
 	};
 }
