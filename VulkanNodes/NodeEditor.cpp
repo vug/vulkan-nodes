@@ -63,11 +63,13 @@ namespace ne {
 	}
 
 	void NodeEditor::DrawNodesAndLinks() {
-		for (const auto& nd : graph.nodes) {
-			nd->Draw();
+		for (const auto& pair : graph.nodes) {
+			NodeBase& nd = *pair.second;
+			nd.Draw();
 		}
 		//for (const auto& [id, link] : graph.links) {
-		for (const auto& lnk : graph.links) {
+		for (const auto& pair : graph.links) {
+			const Link& lnk = pair.second;
 			ImNodes::Link(lnk.id, lnk.startAttrId, lnk.endAttrId);
 		}
 	}
