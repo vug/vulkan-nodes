@@ -58,6 +58,19 @@ namespace ne {
 		bool Draw() const override;
 	};
 
+	template <typename TObj>
+	class ObjectOutputAttribute : public AttributeBase {
+	public:
+		TObj& object;
+
+		ObjectOutputAttribute(TObj& obj)
+			: AttributeBase{ "out" }, object{obj} {}
+
+		bool Draw() const {
+			return false;
+		}
+	};
+
 	// ---------
 
 	class NodeBase {
@@ -89,25 +102,25 @@ namespace ne {
 
 		// Attributes that refer to Object members. Created at Node construction.
 		std::vector<ValueAttribute> inputs;
-		// TODO: Define ObjectOutputAttribute
-		//ObjectOutputAttribute output;
+		// TODO: Define ObjectOutputAttribute and ObjectInputAttribute (former is a reference, latter is an optional reference to a TObj)
+		ObjectOutputAttribute<TObj> output;
 
 		// initialize a default object
 		ObjectEditorNode(std::string title)
-			: NodeBase{ title }, object{} { 
+			: NodeBase{ title }, object{}, output{ object } {
 			AddInputs(object);
 		}
 
 		// construct an object with given arguments
 		template<typename... Args>
 		ObjectEditorNode(std::string title, Args... args) 
-			: NodeBase{ title }, object{ args... } {
+			: NodeBase{ title }, object{ args... }, output{ object } {
 			AddInputs(object);
 		}
 
 		// move provided object
 		ObjectEditorNode(std::string title, TObj&& obj)
-			: NodeBase{ title }, object{std::move(obj)} {
+			: NodeBase{ title }, object{std::move(obj)}, output{ object } {
 			AddInputs(object);
 		}
 
@@ -123,6 +136,16 @@ namespace ne {
 				attr.Draw();
 
 				ImGui::PopItemWidth();
+				ImNodes::EndInputAttribute();
+			
+			}
+
+			{
+				const auto& attr{ output };
+				ImNodes::BeginOutputAttribute(attr.id);
+				const float labelWidth{ ImGui::CalcTextSize(attr.name.c_str()).x };
+				ImGui::Indent(nodeWidth - labelWidth);
+				ImGui::Text(attr.name.c_str());
 				ImNodes::EndOutputAttribute();
 			}
 		}
@@ -131,6 +154,7 @@ namespace ne {
 			std::vector<std::reference_wrapper<int>> ids;
 			for (AttributeBase& attr : inputs)
 				ids.push_back(attr.id);
+			ids.push_back(output.id);
 			return ids;
 		}
 	private:

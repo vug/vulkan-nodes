@@ -14,7 +14,7 @@ namespace ne {
 	bool AttributeDrawer::operator()(YourEnum& val) {
 		const char* items[] = { "Opt1", "Opt2" };
 		int choice = static_cast<int>(val);
-		bool hasModified = ImGui::Combo("combo", &choice, items, IM_ARRAYSIZE(items));
+		bool hasModified = ImGui::Combo("##hidelabel", &choice, items, IM_ARRAYSIZE(items));
 		val = static_cast<YourEnum>(choice);
 		return hasModified;
 	}
@@ -68,7 +68,8 @@ namespace ne {
 
 	Graph NodeEditor::MakeTestGraph() {
 		Graph graph{};
-		graph.AddNode<ne::ObjectEditorNode<ne::MyStruct>>("Node2", 2, 3.0f);
+		graph.AddNode<ne::ObjectEditorNode<ne::MyStruct>>("Node1", 2, 3.0f);
+		graph.AddNode<ne::ObjectEditorNode<ne::YourStruct>>("Node2", ne::YourEnum::Opt2, 4);
 		return graph;
 	}
 }
