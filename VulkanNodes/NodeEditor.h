@@ -52,18 +52,50 @@ namespace ne {
 		// TODO: RemoveNode()
 
 		Link& AddLink(int startAttrId, int endAttrId) {
-			const int id = counter++;
-			auto pair = links.emplace(id, Link { id, startAttrId, endAttrId });
-			Link& link = pair.first->second;
-			return link;
-			// TODO: handle linking from ObjectOutputAttribute to ObjectInputAttribute.
+			assert(attributes.contains(startAttrId));
+			assert(attributes.contains(endAttrId));
+
+			return AddLink(attributes.at(startAttrId), attributes.at(endAttrId));
+		}
+
+		Link& AddLink(AttributeBase& attr1, AttributeBase& attr2) {
+			AttributeBase* pBase1 = &attr1;
+			AttributeBase* pBase2 = &attr2;
+			if (ObjectInputAttribute* attrIn = dynamic_cast<ObjectInputAttribute*>(pBase2)) {
+				if (ObjectOutputAttribute* attrOut = dynamic_cast<ObjectOutputAttribute*>(pBase1)) {
+
+					// does input attr already has connection?
+					std::vector<int> linksToDelete;
+					for (const auto& [linkId, link] : links) {
+						// if yes, mark input's link for deletion, and reset view reference
+						if (link.endAttrId == attrIn->id) {
+							linksToDelete.push_back(linkId);
+							attrIn->optObject.reset();
+						}
+					}
+					for (int linkId : linksToDelete)
+						links.erase(linkId);
+					// new view reference
+					attrIn->optObject = attrOut->object;
+
+					const int id = ++counter;
+					links[id] = { id, attr1.id, attr2.id };
+					return links[id];
+				}
+			}
+			// don't link in any other cases
 		}
 
 		void RemoveLink(int id) {
-			if(links.contains(id))
-				links.erase(id);
-			//auto erased = std::erase_if(links, [&](Link& lnk) { return lnk.id == id; });
-			// TODO: handle unlinking from ObjectOutputAttribute to ObjectInputAttribute.
+			assert(links.contains(id)); // linkId to be destroyed should exist
+
+			const auto& link = links.at(id);
+			AttributeBase& in = attributes.at(link.endAttrId);
+			AttributeBase* pIn = &in;
+			ObjectInputAttribute* attrIn = dynamic_cast<ObjectInputAttribute*>(pIn);
+			if (attrIn)
+				attrIn->optObject.reset();
+			links.erase(id);
 		}
 	};
 

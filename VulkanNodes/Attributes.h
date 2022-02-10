@@ -41,12 +41,12 @@ namespace ne {
 		bool Draw() const override;
 	};
 
-	template <typename TObj>
+
 	class ObjectOutputAttribute : public AttributeBase {
 	public:
-		TObj& object;
+		ObjectRef object;
 
-		ObjectOutputAttribute(TObj& obj)
+		ObjectOutputAttribute(ObjectRef obj)
 			: AttributeBase{ "out" }, object{ obj } {}
 
 		bool Draw() const {

@@ -39,7 +39,7 @@ namespace ne {
 
 		// Attributes that refer to Object members. Created at Node construction.
 		std::vector<ValueAttribute> inputs;
-		ObjectOutputAttribute<TObj> output;
+		ObjectOutputAttribute output;
 
 		// initialize a default object
 		ObjectEditorNode(std::string title)
