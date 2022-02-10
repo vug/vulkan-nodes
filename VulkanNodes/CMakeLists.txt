@@ -2,7 +2,7 @@
 
 add_executable (VulkanNodes 
     "dependencies/imnodes_internal.h" "dependencies/imnodes.h" "dependencies/imnodes.cpp"
-    "VulkanNodes.cpp" "VulkanNodes.h" "Window.h" "Window.cpp" "VulkanContext.h" "VulkanContext.cpp" "ImGuiHelper.h" "ImGuiHelper.cpp" "NodeEditor1.h" "NodeEditor1.cpp" "NodeEditor2.h" "NodeEditor2.cpp" "NodeEditor.h" "NodeEditor.cpp")
+    "VulkanNodes.cpp" "VulkanNodes.h" "Window.h" "Window.cpp" "VulkanContext.h" "VulkanContext.cpp" "ImGuiHelper.h" "ImGuiHelper.cpp" "NodeEditor1.h" "NodeEditor1.cpp" "NodeEditor2.h" "NodeEditor2.cpp" "NodeEditor.h" "NodeEditor.cpp" "Attributes.h" "Objects.h" "Nodes.h" "Attributes.cpp" "Nodes.cpp")
 
     target_compile_features(VulkanNodes PRIVATE cxx_std_20)
 
