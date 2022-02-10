@@ -27,8 +27,8 @@ namespace ne {
 
 		void AddNode(std::shared_ptr<NodeBase> nd) {
 			assert(nd->id != -1); // node should be given an id
-			for (std::reference_wrapper<int>& idRef : nd->GetAllAttributeIds())
-				assert(idRef.get() != -1);  // all attributes of a node should be given an id
+			for (std::reference_wrapper<AttributeBase>& attrRef : nd->GetAllAttributes())
+				assert(attrRef.get().id != -1);  // all attributes of a node should be given an id
 			nodes[nd->id] = nd;
 		}
 
@@ -38,8 +38,8 @@ namespace ne {
 			nd->id = counter++;
 			nodes[nd->id] = nd;
 
-			for (auto& idRef : nd->GetAllAttributeIds())
-				idRef.get() = counter++;
+			for (auto attrRef : nd->GetAllAttributes())
+				attrRef.get().id = counter++;
 			return nd;
 		}
 

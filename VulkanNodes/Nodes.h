@@ -24,8 +24,8 @@ namespace ne {
 
 		virtual void DrawContent() const = 0;
 
-		// helper to assign unique Ids to every attribute of a node
-		virtual std::vector<std::reference_wrapper<int>> GetAllAttributeIds() = 0;
+		// helper to assign unique Ids to every attribute of a node, and for graph to keep references to attributes
+		virtual std::vector<std::reference_wrapper<AttributeBase>> GetAllAttributes() = 0;
 	};
 
 	template<typename T>
@@ -85,12 +85,12 @@ namespace ne {
 			}
 		}
 
-		std::vector<std::reference_wrapper<int>> GetAllAttributeIds() override {
-			std::vector<std::reference_wrapper<int>> ids;
+		std::vector<std::reference_wrapper<AttributeBase>> GetAllAttributes() override {
+			std::vector<std::reference_wrapper<AttributeBase>> attrs;
 			for (AttributeBase& attr : inputs)
-				ids.push_back(attr.id);
-			ids.push_back(output.id);
-			return ids;
+				attrs.push_back(attr);
+			attrs.push_back(output);
+			return attrs;
 		}
 	private:
 		void AddInputs(MyStruct& myStruct) {
@@ -119,6 +119,6 @@ namespace ne {
 
 		void DrawContent() const override;
 
-		std::vector<std::reference_wrapper<int>> GetAllAttributeIds() override;
+		std::vector<std::reference_wrapper<AttributeBase>> GetAllAttributes() override;
 	};
 }

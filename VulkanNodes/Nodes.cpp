@@ -49,8 +49,8 @@ namespace ne {
 		}
 	}
 
-	std::vector<std::reference_wrapper<int>> ObjectViewerNode::GetAllAttributeIds() {
-		std::vector<std::reference_wrapper<int>> ids = { input.id };
-		return ids;
+	std::vector<std::reference_wrapper<AttributeBase>> ObjectViewerNode::GetAllAttributes() {
+		std::vector<std::reference_wrapper<AttributeBase>> attrs = { input };
+		return attrs;
 	}
 }
