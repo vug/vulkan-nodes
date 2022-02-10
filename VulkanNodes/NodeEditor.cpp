@@ -22,9 +22,12 @@ namespace ne {
 		DrawPopupMenu();
 		DrawNodesAndLinks();
 		SaveLoadGraph();
-
 		ImNodes::MiniMap(0.2f, ImNodesMiniMapLocation_BottomRight);
+
 		ImNodes::EndNodeEditor();
+
+		CreateDeleteLinks();
+
 		ImGui::End();
 	}
 
@@ -63,10 +66,10 @@ namespace ne {
 		for (const auto& nd : graph.nodes) {
 			nd->Draw();
 		}
-		// TODO: bring Links
 		//for (const auto& [id, link] : graph.links) {
-		//	ImNodes::Link(id, link.start_attr, link.end_attr);
-		//}
+		for (const auto& lnk : graph.links) {
+			ImNodes::Link(lnk.id, lnk.startAttrId, lnk.endAttrId);
+		}
 	}
 
 	void NodeEditor::SaveLoadGraph() {
@@ -81,12 +84,23 @@ namespace ne {
 		}
 	}
 
+	void NodeEditor::CreateDeleteLinks() {
+		int linkStartId, linkEndId;
+		if (ImNodes::IsLinkCreated(&linkStartId, &linkEndId))
+			graph.AddLink(linkStartId, linkEndId);
+
+		int linkId;
+		if (ImNodes::IsLinkDestroyed(&linkId))
+			graph.RemoveLink(linkId);
+	}
+
 	Graph NodeEditor::MakeTestGraph() {
 		Graph graph{};
 		auto nd1 = graph.AddNode<ObjectEditorNode<MyStruct>>("Node1", 2, 3.0f);
 		auto nd2 = graph.AddNode<ObjectEditorNode<YourStruct>>("Node2", YourEnum::Opt2, 4);
 		auto nd3 = graph.AddNode<ObjectViewerNode>();
 		nd3->input.optObject = nd2->output.object;
+		graph.AddLink(nd2->output.id, nd3->input.id);
 		return graph;
 	}
 }

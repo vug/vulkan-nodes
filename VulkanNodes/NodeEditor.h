@@ -11,9 +11,16 @@
 #include <vector>
 
 namespace ne {
+	struct Link {
+		int id;
+		int startAttrId;
+		int endAttrId;
+	};
+
 	class Graph {
 	public:
 		std::vector<std::shared_ptr<NodeBase>> nodes;
+		std::vector<Link> links;
 		int counter{};
 
 		void AddNode(std::shared_ptr<NodeBase> nd) {
@@ -32,6 +39,18 @@ namespace ne {
 			for (auto& idRef : nd->GetAllAttributeIds())
 				idRef.get() = counter++;
 			return nd;
+		}
+
+		// TODO: RemoveNode()
+
+		Link& AddLink(int startAttrId, int endAttrId) {
+			return links.emplace_back(counter++, startAttrId, endAttrId);
+			// TODO: handle linking from ObjectOutputAttribute to ObjectInputAttribute.
+		}
+
+		void RemoveLink(int id) {
+			auto erased = std::erase_if(links, [&](Link& lnk) { return lnk.id == id; });
+			// TODO: handle unlinking from ObjectOutputAttribute to ObjectInputAttribute.
 		}
 	};
 
@@ -53,5 +72,6 @@ namespace ne {
 		void DrawPopupMenu();
 		void DrawNodesAndLinks();
 		void SaveLoadGraph();
+		void CreateDeleteLinks();
 	};
 }
