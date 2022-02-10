@@ -23,13 +23,17 @@ namespace ne {
 		// Graph owns nodes and links
 		std::unordered_map<int, std::shared_ptr<NodeBase>> nodes;
 		std::unordered_map<int, Link> links;
+		// Since attributes are owned by nodes, graph only have references to them
+		std::unordered_map<int, std::reference_wrapper<AttributeBase>> attributes;
 		int counter{};
 
 		void AddNode(std::shared_ptr<NodeBase> nd) {
 			assert(nd->id != -1); // node should be given an id
-			for (std::reference_wrapper<AttributeBase>& attrRef : nd->GetAllAttributes())
+			for (auto attrRef : nd->GetAllAttributes()) {
 				assert(attrRef.get().id != -1);  // all attributes of a node should be given an id
-			nodes[nd->id] = nd;
+				attributes.insert(std::make_pair(attrRef.get().id, attrRef));
+			}
+			nodes[nd->id] = nd;				
 		}
 
 		template<IsNode TNode, typename... Args>
@@ -38,8 +42,10 @@ namespace ne {
 			nd->id = counter++;
 			nodes[nd->id] = nd;
 
-			for (auto attrRef : nd->GetAllAttributes())
+			for (auto attrRef : nd->GetAllAttributes()) {
 				attrRef.get().id = counter++;
+				attributes.insert(std::make_pair(attrRef.get().id, attrRef));
+			}
 			return nd;
 		}
 
