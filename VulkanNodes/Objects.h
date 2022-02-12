@@ -51,6 +51,13 @@ namespace ne {
 			{VK_SAMPLE_COUNT_64_BIT, "64"},
 		};
 
+		static std::unordered_map<VkColorComponentFlagBits, const char*> VkColorComponentDict = {
+			{VK_COLOR_COMPONENT_R_BIT, "R"},
+			{VK_COLOR_COMPONENT_G_BIT, "G"},
+			{VK_COLOR_COMPONENT_B_BIT, "B"},
+			{VK_COLOR_COMPONENT_A_BIT, "A"},
+		};
+
 		template <typename TVkEnum>
 		const std::unordered_map<TVkEnum, const char*>& GetDict() {
 			if constexpr (std::is_same_v<TVkEnum, VkAttachmentLoadOp>)
@@ -64,6 +71,8 @@ namespace ne {
 
 			else if constexpr (std::is_same_v<TVkEnum, VkSampleCountFlagBits>)
 				return VkSampleCountDict;
+			else if constexpr (std::is_same_v<TVkEnum, VkColorComponentFlagBits>)
+				return VkColorComponentDict;
 		}
 
 		template <typename TVkEnum>
@@ -103,5 +112,6 @@ namespace ne {
 	struct YourStruct {
 		YourEnum option;
 		int num;
+		VkColorComponentFlagBits colorComponents;
 	};
 }

@@ -14,7 +14,7 @@ namespace ne {
 	using ValueRef = std::variant<
 		std::reference_wrapper<int>, std::reference_wrapper<float>, std::reference_wrapper<YourEnum>, std::reference_wrapper<VkFormat>,
 		std::reference_wrapper<VkAttachmentLoadOp>, std::reference_wrapper<VkAttachmentStoreOp>, std::reference_wrapper<VkImageLayout>,
-		std::reference_wrapper<VkSampleCountFlagBits>
+		std::reference_wrapper<VkSampleCountFlagBits>, std::reference_wrapper<VkColorComponentFlagBits>
 	>;
 
 	using ObjectRef = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<YourStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
@@ -95,6 +95,9 @@ namespace ne {
 			}
 
 			bool operator()(VkSampleCountFlagBits& val) {
+				return DrawVkFlags(val);
+			}
+			bool operator()(VkColorComponentFlagBits& val) {
 				return DrawVkFlags(val);
 			}
 		};

@@ -105,6 +105,7 @@ namespace ne {
 		void AddInputs(YourStruct& yourStruct) {
 			inputs.emplace_back("option", yourStruct.option);
 			inputs.emplace_back("num", yourStruct.num);
+			inputs.emplace_back("color components", yourStruct.colorComponents);
 		}
 	};
 

@@ -50,6 +50,7 @@ namespace ne {
 		const char* items[] = { "Opt1", "Opt2" };
 		ImGui::Text("option: %s", items[static_cast<int>(obj.option)]);
 		ImGui::Text("num: %d", obj.num);
+		ImGui::Text("color components: %s", enums::GetFlagLabel(obj.colorComponents).c_str());
 	}
 
 	void ObjectViewerNode::DrawContent() const {
