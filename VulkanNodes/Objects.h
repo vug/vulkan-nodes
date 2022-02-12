@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <cassert>
 #include <map>
 #include <string>
 #include <type_traits>
@@ -89,7 +90,9 @@ namespace ne {
 
 		template <typename TVkEnum>
 		const char* GetEnumLabel(const TVkEnum& val) {
-			return GetDict<TVkEnum>().at(val);
+			auto& dict = GetDict<TVkEnum>();
+			assert(dict.contains(val));
+			return dict.at(val);
 		}
 
 		template <typename TVkFlag>
