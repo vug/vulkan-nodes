@@ -96,6 +96,7 @@ namespace ne {
 		void AddInputs(MyStruct& myStruct) {
 			inputs.emplace_back("count", myStruct.count);
 			inputs.emplace_back("magnitude", myStruct.magnitude);
+			inputs.emplace_back("format", myStruct.format);
 			inputs.emplace_back("attachment load op", myStruct.attachmentLoadOp);
 			inputs.emplace_back("attachment store op", myStruct.attachmentStoreOp);
 			inputs.emplace_back("image layout", myStruct.imageLayout);

@@ -21,6 +21,15 @@ namespace ne {
 			{VK_ATTACHMENT_STORE_OP_NONE_EXT, "None Ext"},
 		};
 
+		static std::unordered_map<VkFormat, const char*> VkFormatOpDict = {
+			{VK_FORMAT_UNDEFINED, "Undefined"},
+			{VK_FORMAT_D24_UNORM_S8_UINT, "D24 Unorm S8 Uint"},
+			{VK_FORMAT_R32G32B32_SFLOAT, "R32G32B32 Sfloat"},
+			{VK_FORMAT_B8G8R8A8_SRGB, "B8G8R8A8 Srgb"},
+			{VK_FORMAT_R8G8B8A8_UNORM, "R8G8B8A8 Unorm"},
+			{VK_FORMAT_R8G8B8A8_SRGB, "R8G8B8A8 Srgb"},
+		};
+
 		static std::unordered_map<VkImageLayout, const char*> VkImageLayoutDict = {
 			{VK_IMAGE_LAYOUT_UNDEFINED, "Undefined"},
 			{VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, "Color Attachment Optimal"},
@@ -38,6 +47,8 @@ namespace ne {
 				return VkAttachmentLoadOpDict;
 			else if constexpr (std::is_same_v<TVkEnum, VkAttachmentStoreOp>)
 				return VkAttachmentStoreOpDict;
+			else if constexpr (std::is_same_v<TVkEnum, VkFormat>)
+				return VkFormatOpDict;
 			else if constexpr (std::is_same_v<TVkEnum, VkImageLayout>)
 				return VkImageLayoutDict;
 		}
@@ -51,6 +62,7 @@ namespace ne {
 	struct MyStruct {
 		int count;
 		float magnitude;
+		VkFormat format;
 		VkAttachmentLoadOp attachmentLoadOp;
 		VkAttachmentStoreOp attachmentStoreOp;
 		VkImageLayout imageLayout;

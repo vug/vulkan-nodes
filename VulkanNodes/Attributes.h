@@ -12,7 +12,7 @@
 namespace ne {
 	// Cannot have a Value& in Attribute but Value can be made of references!
 	using ValueRef = std::variant<
-		std::reference_wrapper<int>, std::reference_wrapper<float>, std::reference_wrapper<YourEnum>, 
+		std::reference_wrapper<int>, std::reference_wrapper<float>, std::reference_wrapper<YourEnum>, std::reference_wrapper<VkFormat>,
 		std::reference_wrapper<VkAttachmentLoadOp>, std::reference_wrapper<VkAttachmentStoreOp>, std::reference_wrapper<VkImageLayout>
 	>;
 
@@ -39,7 +39,7 @@ namespace ne {
 
 		template <typename TVkEnum>
 		static bool DrawVkEnum(TVkEnum& val) {
-			const char* previewVal = enums::GetLabel2(val);
+			const char* previewVal = enums::GetLabel(val);
 			bool wasUsed = false;
 			if (ImGui::BeginCombo("##hidelabel", previewVal, ImGuiComboFlags_PopupAlignLeft | ImGuiComboFlags_HeightLarge)) {
 				for (auto& [opVal, opLabel] : enums::GetDict<TVkEnum>()) {
@@ -62,6 +62,9 @@ namespace ne {
 			bool operator()(float& val);
 			bool operator()(int& val);
 			bool operator()(YourEnum& val);
+			bool operator()(VkFormat& val) {
+				return DrawVkEnum(val);
+			}
 			bool operator()(VkAttachmentLoadOp& val) {
 				return DrawVkEnum(val);
 			}
