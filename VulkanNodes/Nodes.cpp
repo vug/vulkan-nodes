@@ -38,6 +38,7 @@ namespace ne {
 		ImGui::Text("MyStruct");
 		ImGui::Text("count: %d", obj.count);
 		ImGui::Text("magnitude: %f", obj.magnitude);
+		ImGui::Text("attachment load op: %s", enums::VkAttachmentLoadOpDict[obj.attachmentLoadOp]);
 		ImGui::Text("image layout: %s", enums::GetLabel(obj.imageLayout));
 	}
 

@@ -101,8 +101,7 @@ namespace ne {
 		auto nd1 = graph.AddNode<ObjectEditorNode<MyStruct>>("Node1", 2, 3.0f);
 		auto nd2 = graph.AddNode<ObjectEditorNode<YourStruct>>("Node2", YourEnum::Opt2, 4);
 		auto nd3 = graph.AddNode<ObjectViewerNode>();
-		nd3->input.optObject = nd2->output.object;
-		graph.AddLink(nd2->output.id, nd3->input.id);
+		graph.AddLink(nd1->output.id, nd3->input.id);
 		return graph;
 	}
 }

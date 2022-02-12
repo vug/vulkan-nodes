@@ -3,10 +3,17 @@
 #include <vulkan/vulkan.h>
 
 #include <type_traits>
+#include <unordered_map>
 
 namespace ne {
 
 	namespace enums {
+		static std::unordered_map<VkAttachmentLoadOp, const char*> VkAttachmentLoadOpDict = {
+			{VK_ATTACHMENT_LOAD_OP_LOAD, "Load"},
+			{VK_ATTACHMENT_LOAD_OP_CLEAR, "Clear"},
+			{VK_ATTACHMENT_LOAD_OP_DONT_CARE, "Don't Care"},
+		};
+
 		static const char* VkImageLayoutLabels[] = { "Undefined", "Color Attachment Optimal", "Depth Stencil Attachment Optimal",
 		"Shader Read-Only Optimal", "Transfer Source Optimal", "Transfer Destination Optimal", "Depth Attachment Optimal",
 		"Present Source Khronos" };
@@ -68,6 +75,7 @@ namespace ne {
 	struct MyStruct {
 		int count;
 		float magnitude;
+		VkAttachmentLoadOp attachmentLoadOp;
 		VkImageLayout imageLayout;
 	};
 

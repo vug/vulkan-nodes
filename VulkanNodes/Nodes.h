@@ -13,7 +13,7 @@ namespace ne {
 		int id{ -1 };
 		std::string title;
 
-		const float nodeWidth{ 150 };
+		const float nodeWidth{ 200 };
 
 		// Note that, when virtual Draw method is added to NodeBase it is not an aggregate class anymore
 		// hence it cannot be aggregate initialized, i.e. NodeBase { -1, "title" } implicit constructor cease to exist
@@ -96,6 +96,7 @@ namespace ne {
 		void AddInputs(MyStruct& myStruct) {
 			inputs.emplace_back("count", myStruct.count);
 			inputs.emplace_back("magnitude", myStruct.magnitude);
+			inputs.emplace_back("attachment load op", myStruct.attachmentLoadOp);
 			inputs.emplace_back("image layout", myStruct.imageLayout);
 		}
 		void AddInputs(YourStruct& yourStruct) {
