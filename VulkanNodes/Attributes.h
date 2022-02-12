@@ -12,7 +12,7 @@
 namespace ne {
 	// Cannot have a Value& in Attribute but Value can be made of references!
 	using ValueRef = std::variant<
-		std::reference_wrapper<int>, std::reference_wrapper<float>, std::reference_wrapper<YourEnum>, std::reference_wrapper<VkFormat>,
+		std::reference_wrapper<int>, std::reference_wrapper<float>, std::reference_wrapper<VkFormat>,
 		std::reference_wrapper<VkAttachmentLoadOp>, std::reference_wrapper<VkAttachmentStoreOp>, std::reference_wrapper<VkImageLayout>,
 		std::reference_wrapper<VkSampleCountFlagBits>, std::reference_wrapper<VkColorComponentFlagBits>
 	>;
@@ -80,7 +80,6 @@ namespace ne {
 		struct Drawer {
 			bool operator()(float& val);
 			bool operator()(int& val);
-			bool operator()(YourEnum& val);
 
 			// Enums
 			bool operator()(VkFormat& val) {

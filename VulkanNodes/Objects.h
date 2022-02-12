@@ -95,8 +95,6 @@ namespace ne {
 	};
 
 	struct MyStruct {
-		int count;
-		float magnitude;
 		VkFormat format;
 		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
 		VkAttachmentLoadOp loadOp;
@@ -104,14 +102,9 @@ namespace ne {
 		VkImageLayout initialLayout;
 	};
 
-	enum class YourEnum {
-		Opt1,
-		Opt2,
-	};
-
 	struct YourStruct {
-		YourEnum option;
 		int num;
+		float magnitude;
 		VkColorComponentFlagBits colorComponents;
 	};
 }

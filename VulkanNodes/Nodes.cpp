@@ -36,8 +36,6 @@ namespace ne {
 
 	void ObjectViewerNode::Drawer::operator()(MyStruct& obj) {
 		ImGui::Text("MyStruct");
-		ImGui::Text("count: %d", obj.count);
-		ImGui::Text("magnitude: %f", obj.magnitude);
 		ImGui::Text("format: %s", enums::GetEnumLabel(obj.format));
 		ImGui::Text("samples: %s", enums::GetFlagLabel(obj.samples).c_str());
 		ImGui::Text("load op: %s", enums::GetEnumLabel(obj.loadOp));
@@ -47,9 +45,8 @@ namespace ne {
 
 	void ObjectViewerNode::Drawer::operator()(YourStruct& obj) {
 		ImGui::Text("YourStruct");
-		const char* items[] = { "Opt1", "Opt2" };
-		ImGui::Text("option: %s", items[static_cast<int>(obj.option)]);
 		ImGui::Text("num: %d", obj.num);
+		ImGui::Text("magnitude: %f", obj.magnitude);
 		ImGui::Text("color components: %s", enums::GetFlagLabel(obj.colorComponents).c_str());
 	}
 

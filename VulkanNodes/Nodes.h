@@ -94,8 +94,6 @@ namespace ne {
 		}
 	private:
 		void AddInputs(MyStruct& myStruct) {
-			inputs.emplace_back("count", myStruct.count);
-			inputs.emplace_back("magnitude", myStruct.magnitude);
 			inputs.emplace_back("format", myStruct.format);
 			inputs.emplace_back("samples", myStruct.samples);
 			inputs.emplace_back("load op", myStruct.loadOp);
@@ -103,8 +101,8 @@ namespace ne {
 			inputs.emplace_back("initial layout", myStruct.initialLayout);
 		}
 		void AddInputs(YourStruct& yourStruct) {
-			inputs.emplace_back("option", yourStruct.option);
 			inputs.emplace_back("num", yourStruct.num);
+			inputs.emplace_back("magnitude", yourStruct.magnitude);
 			inputs.emplace_back("color components", yourStruct.colorComponents);
 		}
 	};

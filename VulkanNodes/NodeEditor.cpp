@@ -98,8 +98,8 @@ namespace ne {
 
 	Graph NodeEditor::MakeTestGraph() {
 		Graph graph{};
-		auto nd1 = graph.AddNode<ObjectEditorNode<MyStruct>>("Node1", 2, 3.0f);
-		auto nd2 = graph.AddNode<ObjectEditorNode<YourStruct>>("Node2", YourEnum::Opt2, 4);
+		auto nd1 = graph.AddNode<ObjectEditorNode<MyStruct>>("Node1");
+		auto nd2 = graph.AddNode<ObjectEditorNode<YourStruct>>("Node2", 4, 3.14f, static_cast<VkColorComponentFlagBits>(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT));
 		auto nd3 = graph.AddNode<ObjectViewerNode>();
 		graph.AddLink(nd1->output.id, nd3->input.id);
 		return graph;
