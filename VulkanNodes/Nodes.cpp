@@ -26,6 +26,7 @@ namespace ne {
 		ImGui::Text("MyStruct");
 		ImGui::Text("count: %d", obj.count);
 		ImGui::Text("magnitude: %f", obj.magnitude);
+		ImGui::Text("image layout: %s", VkImageLayoutLabels[VkImageLayoutToIndex(obj.imageLayout)]);
 	}
 
 	void ObjectViewerNode::Drawer::operator()(YourStruct& obj) {

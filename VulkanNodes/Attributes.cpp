@@ -19,6 +19,16 @@ namespace ne {
 		return hasModified;
 	}
 
+	bool ValueAttribute::Drawer::operator()(VkImageLayout& val) {
+		
+        int index = VkImageLayoutToIndex(val);
+        bool wasUsed = false;
+        if (wasUsed = ImGui::Combo("##hidelabel", &index, VkImageLayoutLabels, IM_ARRAYSIZE(VkImageLayoutLabels))) {
+			val = IndextoVkImageLayout(index);
+        }
+        return wasUsed;
+	}
+
 	// -------
 
 	bool ValueAttribute::Draw() const {
