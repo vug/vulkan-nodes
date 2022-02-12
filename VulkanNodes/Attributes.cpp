@@ -19,15 +19,6 @@ namespace ne {
 		return hasModified;
 	}
 
-	bool ValueAttribute::Drawer::operator()(VkImageLayout& val) {
-        int index = enums::GetIndex(val);
-        bool wasUsed = false;
-        if (wasUsed = ImGui::Combo("##hidelabel", &index, enums::GetLabels<VkImageLayout>(), enums::GetNumItems<VkImageLayout>())) {
-			val = enums::GetValue<VkImageLayout>(index);
-        }
-        return wasUsed;
-	}
-
 	// -------
 
 	bool ValueAttribute::Draw() const {
