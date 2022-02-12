@@ -36,6 +36,7 @@ namespace ne {
 
 	void ObjectViewerNode::Drawer::operator()(MyStruct& obj) {
 		ImGui::Text("MyStruct");
+		ImGui::Text("flags: %s", enums::GetFlagLabel(obj.flags).c_str());
 		ImGui::Text("format: %s", enums::GetEnumLabel(obj.format));
 		ImGui::Text("samples: %s", enums::GetFlagLabel(obj.samples).c_str());
 		ImGui::Text("load op: %s", enums::GetEnumLabel(obj.loadOp));

@@ -9,6 +9,8 @@
 namespace ne {
 
 	namespace enums {
+		// ENUMS
+
 		static std::map<VkAttachmentLoadOp, const char*> VkAttachmentLoadOpDict = {
 			{VK_ATTACHMENT_LOAD_OP_LOAD, "Load"},
 			{VK_ATTACHMENT_LOAD_OP_CLEAR, "Clear"},
@@ -51,6 +53,13 @@ namespace ne {
 			{VK_SAMPLE_COUNT_32_BIT, "32"},
 			{VK_SAMPLE_COUNT_64_BIT, "64"},
 		};
+		
+		// FLAGS
+
+		// Actually values are of type VkAttachmentDescriptionFlagBits but the struct takes VkAttachmentDescriptionFlags
+		static std::map<VkAttachmentDescriptionFlags, const char*> VkAttachmentDescriptionDict = {
+			{VK_ATTACHMENT_DESCRIPTION_MAY_ALIAS_BIT, "May Alias"},
+		};
 
 		static std::map<VkColorComponentFlagBits, const char*> VkColorComponentDict = {
 			{VK_COLOR_COMPONENT_R_BIT, "R"},
@@ -72,6 +81,8 @@ namespace ne {
 
 			else if constexpr (std::is_same_v<TVkEnum, VkSampleCountFlagBits>)
 				return VkSampleCountDict;
+			else if constexpr (std::is_same_v<TVkEnum, VkAttachmentDescriptionFlags>)
+				return VkAttachmentDescriptionDict;
 			else if constexpr (std::is_same_v<TVkEnum, VkColorComponentFlagBits>)
 				return VkColorComponentDict;
 		}
@@ -95,8 +106,9 @@ namespace ne {
 		}
 	};
 
+	// TODO: no need MyStruct, directly use VkAttachmentDescription
 	struct MyStruct {
-		// TODO: Add VkAttachmentDescriptionFlags, then becomes VkAttachmentDescription
+		VkAttachmentDescriptionFlags flags{};
 		VkFormat format;
 		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
 		VkAttachmentLoadOp loadOp;

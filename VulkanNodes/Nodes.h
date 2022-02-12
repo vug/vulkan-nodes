@@ -94,6 +94,7 @@ namespace ne {
 		}
 	private:
 		void AddInputs(MyStruct& myStruct) {
+			inputs.emplace_back("flags", myStruct.flags);
 			inputs.emplace_back("format", myStruct.format);
 			inputs.emplace_back("samples", myStruct.samples);
 			inputs.emplace_back("load op", myStruct.loadOp);
