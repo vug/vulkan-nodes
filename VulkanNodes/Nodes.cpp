@@ -1,5 +1,9 @@
 #include "Nodes.h"
 
+#include <imgui_stdlib.h>
+
+#include <string>
+
 namespace ne {
 	void NodeBase::Draw() {
 		ImNodes::BeginNode(id);
@@ -10,6 +14,14 @@ namespace ne {
 
 		DrawContent();
 		ImNodes::EndNode();
+
+		const std::string label = std::to_string(id) + "NodePopup";
+		if (ImGui::IsItemHovered() && ImGui::IsMouseClicked(ImGuiMouseButton_Right))
+			ImGui::OpenPopup(label.c_str());
+		if (ImGui::BeginPopup(label.c_str())) {
+			ImGui::InputText("rename", &title);
+			ImGui::EndPopup();
+		}
 	}
 
 	// -------
