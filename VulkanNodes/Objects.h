@@ -12,6 +12,13 @@ namespace ne {
 			{VK_ATTACHMENT_LOAD_OP_LOAD, "Load"},
 			{VK_ATTACHMENT_LOAD_OP_CLEAR, "Clear"},
 			{VK_ATTACHMENT_LOAD_OP_DONT_CARE, "Don't Care"},
+			{VK_ATTACHMENT_LOAD_OP_NONE_EXT, "None Ext"},
+		};
+
+		static std::unordered_map<VkAttachmentStoreOp, const char*> VkAttachmentStoreOpDict = {
+			{VK_ATTACHMENT_STORE_OP_STORE, "Store"},
+			{VK_ATTACHMENT_STORE_OP_DONT_CARE, "Don't Care"},
+			{VK_ATTACHMENT_STORE_OP_NONE_EXT, "None Ext"},
 		};
 
 		static const char* VkImageLayoutLabels[] = { "Undefined", "Color Attachment Optimal", "Depth Stencil Attachment Optimal",
@@ -76,6 +83,7 @@ namespace ne {
 		int count;
 		float magnitude;
 		VkAttachmentLoadOp attachmentLoadOp;
+		VkAttachmentStoreOp attachmentStoreOp;
 		VkImageLayout imageLayout;
 	};
 
