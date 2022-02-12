@@ -2,26 +2,27 @@
 
 #include <vulkan/vulkan.h>
 
+#include <map>
+#include <string>
 #include <type_traits>
-#include <unordered_map>
 
 namespace ne {
 
 	namespace enums {
-		static std::unordered_map<VkAttachmentLoadOp, const char*> VkAttachmentLoadOpDict = {
+		static std::map<VkAttachmentLoadOp, const char*> VkAttachmentLoadOpDict = {
 			{VK_ATTACHMENT_LOAD_OP_LOAD, "Load"},
 			{VK_ATTACHMENT_LOAD_OP_CLEAR, "Clear"},
 			{VK_ATTACHMENT_LOAD_OP_DONT_CARE, "Don't Care"},
 			{VK_ATTACHMENT_LOAD_OP_NONE_EXT, "None Ext"},
 		};
 
-		static std::unordered_map<VkAttachmentStoreOp, const char*> VkAttachmentStoreOpDict = {
+		static std::map<VkAttachmentStoreOp, const char*> VkAttachmentStoreOpDict = {
 			{VK_ATTACHMENT_STORE_OP_STORE, "Store"},
 			{VK_ATTACHMENT_STORE_OP_DONT_CARE, "Don't Care"},
 			{VK_ATTACHMENT_STORE_OP_NONE_EXT, "None Ext"},
 		};
 
-		static std::unordered_map<VkFormat, const char*> VkFormatOpDict = {
+		static std::map<VkFormat, const char*> VkFormatOpDict = {
 			{VK_FORMAT_UNDEFINED, "Undefined"},
 			{VK_FORMAT_D24_UNORM_S8_UINT, "D24 Unorm S8 Uint"},
 			{VK_FORMAT_R32G32B32_SFLOAT, "R32G32B32 Sfloat"},
@@ -30,7 +31,7 @@ namespace ne {
 			{VK_FORMAT_R8G8B8A8_SRGB, "R8G8B8A8 Srgb"},
 		};
 
-		static std::unordered_map<VkImageLayout, const char*> VkImageLayoutDict = {
+		static std::map<VkImageLayout, const char*> VkImageLayoutDict = {
 			{VK_IMAGE_LAYOUT_UNDEFINED, "Undefined"},
 			{VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, "Color Attachment Optimal"},
 			{VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, "Depth Stencil Attachment Optimal"},
@@ -41,7 +42,7 @@ namespace ne {
 			{VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, "Present Source Khronos"},
 		};
 
-		static std::unordered_map<VkSampleCountFlagBits, const char*> VkSampleCountDict = {
+		static std::map<VkSampleCountFlagBits, const char*> VkSampleCountDict = {
 			{VK_SAMPLE_COUNT_1_BIT, "1"},
 			{VK_SAMPLE_COUNT_2_BIT, "2"},
 			{VK_SAMPLE_COUNT_4_BIT, "4"},
@@ -51,7 +52,7 @@ namespace ne {
 			{VK_SAMPLE_COUNT_64_BIT, "64"},
 		};
 
-		static std::unordered_map<VkColorComponentFlagBits, const char*> VkColorComponentDict = {
+		static std::map<VkColorComponentFlagBits, const char*> VkColorComponentDict = {
 			{VK_COLOR_COMPONENT_R_BIT, "R"},
 			{VK_COLOR_COMPONENT_G_BIT, "G"},
 			{VK_COLOR_COMPONENT_B_BIT, "B"},
@@ -59,7 +60,7 @@ namespace ne {
 		};
 
 		template <typename TVkEnum>
-		const std::unordered_map<TVkEnum, const char*>& GetDict() {
+		const std::map<TVkEnum, const char*>& GetDict() {
 			if constexpr (std::is_same_v<TVkEnum, VkAttachmentLoadOp>)
 				return VkAttachmentLoadOpDict;
 			else if constexpr (std::is_same_v<TVkEnum, VkAttachmentStoreOp>)
