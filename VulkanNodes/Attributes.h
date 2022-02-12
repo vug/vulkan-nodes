@@ -13,7 +13,8 @@ namespace ne {
 	// Cannot have a Value& in Attribute but Value can be made of references!
 	using ValueRef = std::variant<
 		std::reference_wrapper<int>, std::reference_wrapper<float>, std::reference_wrapper<YourEnum>, std::reference_wrapper<VkFormat>,
-		std::reference_wrapper<VkAttachmentLoadOp>, std::reference_wrapper<VkAttachmentStoreOp>, std::reference_wrapper<VkImageLayout>
+		std::reference_wrapper<VkAttachmentLoadOp>, std::reference_wrapper<VkAttachmentStoreOp>, std::reference_wrapper<VkImageLayout>,
+		std::reference_wrapper<VkSampleCountFlagBits>
 	>;
 
 	using ObjectRef = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<YourStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
@@ -39,7 +40,7 @@ namespace ne {
 
 		template <typename TVkEnum>
 		static bool DrawVkEnum(TVkEnum& val) {
-			const char* previewVal = enums::GetLabel(val);
+			const char* previewVal = enums::GetEnumLabel(val);
 			bool wasUsed = false;
 			if (ImGui::BeginCombo("##hidelabel", previewVal, ImGuiComboFlags_PopupAlignLeft | ImGuiComboFlags_HeightLarge)) {
 				for (auto& [opVal, opLabel] : enums::GetDict<TVkEnum>()) {
@@ -52,6 +53,24 @@ namespace ne {
 					if (is_selected)
 						ImGui::SetItemDefaultFocus();
 				}
+				ImGui::EndCombo();
+			}
+			return wasUsed;
+		}
+
+		template <typename TVkFlags>
+		static bool DrawVkFlags(TVkFlags& val) {
+			bool wasUsed = false;
+			if (ImGui::BeginCombo("##hidelabel", enums::GetFlagLabel(val).c_str())) {
+				TVkFlags newVal = static_cast<TVkFlags>(0);
+				for (auto& [opVal, opLabel] : enums::GetDict<TVkFlags>()) {
+					bool isSelected = (opVal & val) == opVal;
+					if (ImGui::Selectable(opLabel, &isSelected, ImGuiSelectableFlags_DontClosePopups))
+						wasUsed = true;
+					if (isSelected)
+						newVal = static_cast<TVkFlags>(newVal | opVal);
+				}
+				val = newVal;
 				ImGui::EndCombo();
 			}
 			return wasUsed;
@@ -73,6 +92,10 @@ namespace ne {
 			}
 			bool operator()(VkImageLayout& val) {
 				return DrawVkEnum(val);
+			}
+
+			bool operator()(VkSampleCountFlagBits& val) {
+				return DrawVkFlags(val);
 			}
 		};
 

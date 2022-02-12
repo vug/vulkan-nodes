@@ -41,6 +41,16 @@ namespace ne {
 			{VK_IMAGE_LAYOUT_PRESENT_SRC_KHR, "Present Source Khronos"},
 		};
 
+		static std::unordered_map<VkSampleCountFlagBits, const char*> VkSampleCountDict = {
+			{VK_SAMPLE_COUNT_1_BIT, "1"},
+			{VK_SAMPLE_COUNT_2_BIT, "2"},
+			{VK_SAMPLE_COUNT_4_BIT, "4"},
+			{VK_SAMPLE_COUNT_8_BIT, "8"},
+			{VK_SAMPLE_COUNT_16_BIT, "16"},
+			{VK_SAMPLE_COUNT_32_BIT, "32"},
+			{VK_SAMPLE_COUNT_64_BIT, "64"},
+		};
+
 		template <typename TVkEnum>
 		const std::unordered_map<TVkEnum, const char*>& GetDict() {
 			if constexpr (std::is_same_v<TVkEnum, VkAttachmentLoadOp>)
@@ -51,11 +61,27 @@ namespace ne {
 				return VkFormatOpDict;
 			else if constexpr (std::is_same_v<TVkEnum, VkImageLayout>)
 				return VkImageLayoutDict;
+
+			else if constexpr (std::is_same_v<TVkEnum, VkSampleCountFlagBits>)
+				return VkSampleCountDict;
 		}
 
 		template <typename TVkEnum>
-		const char* GetLabel(const TVkEnum& val) {
+		const char* GetEnumLabel(const TVkEnum& val) {
 			return GetDict<TVkEnum>().at(val);
+		}
+
+		template <typename TVkFlag>
+		std::string GetFlagLabel(const TVkFlag& val) {
+			std::string label;
+			auto& dict = enums::GetDict<TVkFlag>();
+			for (auto& [opVal, opLabel] : dict) {
+				if ((opVal & val) == opVal) {
+					label += opLabel;
+					label += ",";
+				}
+			}
+			return label;
 		}
 	};
 
@@ -63,9 +89,10 @@ namespace ne {
 		int count;
 		float magnitude;
 		VkFormat format;
-		VkAttachmentLoadOp attachmentLoadOp;
-		VkAttachmentStoreOp attachmentStoreOp;
-		VkImageLayout imageLayout;
+		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
+		VkAttachmentLoadOp loadOp;
+		VkAttachmentStoreOp storeOp;
+		VkImageLayout initialLayout;
 	};
 
 	enum class YourEnum {

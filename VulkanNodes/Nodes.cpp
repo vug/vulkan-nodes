@@ -38,10 +38,11 @@ namespace ne {
 		ImGui::Text("MyStruct");
 		ImGui::Text("count: %d", obj.count);
 		ImGui::Text("magnitude: %f", obj.magnitude);
-		ImGui::Text("format: %s", enums::GetLabel(obj.format));
-		ImGui::Text("attachment load op: %s", enums::GetLabel(obj.attachmentLoadOp));
-		ImGui::Text("attachment store op: %s", enums::GetLabel(obj.attachmentStoreOp));
-		ImGui::Text("image layout: %s", enums::GetLabel(obj.imageLayout));
+		ImGui::Text("format: %s", enums::GetEnumLabel(obj.format));
+		ImGui::Text("samples: %s", enums::GetFlagLabel(obj.samples).c_str());
+		ImGui::Text("load op: %s", enums::GetEnumLabel(obj.loadOp));
+		ImGui::Text("store op: %s", enums::GetEnumLabel(obj.storeOp));
+		ImGui::Text("initial layout: %s", enums::GetEnumLabel(obj.initialLayout));
 	}
 
 	void ObjectViewerNode::Drawer::operator()(YourStruct& obj) {
