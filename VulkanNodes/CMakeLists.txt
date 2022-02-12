@@ -6,7 +6,7 @@ add_executable (VulkanNodes
     "ImGuiHelper.h" "ImGuiHelper.cpp"
     "VulkanContext.h" "VulkanContext.cpp" 
     "VulkanNodes.cpp" "VulkanNodes.h" 
-    "NodeEditor.h" "NodeEditor.cpp" "Attributes.h" "Objects.h" "Nodes.h" "Attributes.cpp" "Nodes.cpp" "Objects.cpp")
+    "NodeEditor.h" "NodeEditor.cpp" "Attributes.h" "Objects.h" "Nodes.h" "Attributes.cpp" "Nodes.cpp" )
 
     target_compile_features(VulkanNodes PRIVATE cxx_std_20)
 

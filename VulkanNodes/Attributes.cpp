@@ -20,11 +20,10 @@ namespace ne {
 	}
 
 	bool ValueAttribute::Drawer::operator()(VkImageLayout& val) {
-		
-        int index = VkImageLayoutToIndex(val);
+        int index = enums::GetIndex(val);
         bool wasUsed = false;
-        if (wasUsed = ImGui::Combo("##hidelabel", &index, VkImageLayoutLabels, IM_ARRAYSIZE(VkImageLayoutLabels))) {
-			val = IndextoVkImageLayout(index);
+        if (wasUsed = ImGui::Combo("##hidelabel", &index, enums::GetLabels<VkImageLayout>(), enums::GetNumItems<VkImageLayout>())) {
+			val = enums::GetValue<VkImageLayout>(index);
         }
         return wasUsed;
 	}
