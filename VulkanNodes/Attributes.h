@@ -18,7 +18,7 @@ namespace ne {
 		std::reference_wrapper<VkAttachmentDescriptionFlags>
 	>;
 
-	using ObjectRef = std::variant<std::reference_wrapper<MyStruct>, std::reference_wrapper<YourStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
+	using ObjectRef = std::variant<std::reference_wrapper<VkAttachmentDescription>, std::reference_wrapper<YourStruct>, std::reference_wrapper<int>, std::reference_wrapper<float>>;
 
 	class AttributeBase {
 	public:

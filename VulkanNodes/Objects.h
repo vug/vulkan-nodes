@@ -106,19 +106,6 @@ namespace ne {
 		}
 	};
 
-	// TODO: no need MyStruct, directly use VkAttachmentDescription
-	struct MyStruct {
-		VkAttachmentDescriptionFlags flags{};
-		VkFormat format;
-		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
-		VkAttachmentLoadOp loadOp;
-		VkAttachmentStoreOp storeOp;
-		VkAttachmentLoadOp stencilLoadOp;
-		VkAttachmentStoreOp stencilStoreOp;
-		VkImageLayout initialLayout;
-		VkImageLayout finalLayout;
-	};
-
 	struct YourStruct {
 		int num;
 		float magnitude;

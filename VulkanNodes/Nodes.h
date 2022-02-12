@@ -93,16 +93,16 @@ namespace ne {
 			return attrs;
 		}
 	private:
-		void AddInputs(MyStruct& myStruct) {
-			inputs.emplace_back("flags", myStruct.flags);
-			inputs.emplace_back("format", myStruct.format);
-			inputs.emplace_back("samples", myStruct.samples);
-			inputs.emplace_back("load op", myStruct.loadOp);
-			inputs.emplace_back("store op", myStruct.storeOp);
-			inputs.emplace_back("stencil load op", myStruct.stencilLoadOp);
-			inputs.emplace_back("stencil store op", myStruct.stencilStoreOp);
-			inputs.emplace_back("initial layout", myStruct.initialLayout);
-			inputs.emplace_back("final layout", myStruct.finalLayout);
+		void AddInputs(VkAttachmentDescription& obj) {
+			inputs.emplace_back("flags", obj.flags);
+			inputs.emplace_back("format", obj.format);
+			inputs.emplace_back("samples", obj.samples);
+			inputs.emplace_back("load op", obj.loadOp);
+			inputs.emplace_back("store op", obj.storeOp);
+			inputs.emplace_back("stencil load op", obj.stencilLoadOp);
+			inputs.emplace_back("stencil store op", obj.stencilStoreOp);
+			inputs.emplace_back("initial layout", obj.initialLayout);
+			inputs.emplace_back("final layout", obj.finalLayout);
 		}
 		void AddInputs(YourStruct& yourStruct) {
 			inputs.emplace_back("num", yourStruct.num);
@@ -121,7 +121,7 @@ namespace ne {
 		struct Drawer {
 			void operator()(float& val);
 			void operator()(int& val);
-			void operator()(MyStruct& obj);
+			void operator()(VkAttachmentDescription& obj);
 			void operator()(YourStruct& obj);
 		};
 

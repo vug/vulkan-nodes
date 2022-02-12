@@ -43,8 +43,9 @@ namespace ne {
 		if (ImGui::BeginPopup("Add Object")) {
 			const ImVec2 clickPos = ImGui::GetMousePosOnOpeningCurrentPopup();
 
-			if (ImGui::MenuItem("MyStruct")) {
-				auto node = graph.AddNode<ObjectEditorNode<MyStruct>>("MyStruct");
+			if (ImGui::MenuItem("VkAttachmentDescription")) {
+				// TODO: develop a "default structs" mechanism. 0 is not an existing value for VkSampleCountFlagBits.
+				auto node = graph.AddNode<ObjectEditorNode<VkAttachmentDescription>>("VkAttachmentDescription", static_cast<VkAttachmentDescriptionFlags>(0), VK_FORMAT_UNDEFINED, VK_SAMPLE_COUNT_1_BIT);
 				ImNodes::SetNodeScreenSpacePos(node->id, clickPos);
 			}
 			if (ImGui::MenuItem("YourStruct")) {
@@ -98,7 +99,7 @@ namespace ne {
 
 	Graph NodeEditor::MakeTestGraph() {
 		Graph graph{};
-		auto nd1 = graph.AddNode<ObjectEditorNode<MyStruct>>("Node1");
+		auto nd1 = graph.AddNode<ObjectEditorNode<VkAttachmentDescription>>("VkAttachmentDescription1", static_cast<VkAttachmentDescriptionFlags>(0), VK_FORMAT_UNDEFINED, VK_SAMPLE_COUNT_1_BIT);
 		auto nd2 = graph.AddNode<ObjectEditorNode<YourStruct>>("Node2", 4, 3.14f, static_cast<VkColorComponentFlagBits>(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT));
 		auto nd3 = graph.AddNode<ObjectViewerNode>();
 		graph.AddLink(nd1->output.id, nd3->input.id);

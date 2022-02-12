@@ -34,7 +34,7 @@ namespace ne {
 		ImGui::Text("%d", &val);
 	}
 
-	void ObjectViewerNode::Drawer::operator()(MyStruct& obj) {
+	void ObjectViewerNode::Drawer::operator()(VkAttachmentDescription& obj) {
 		ImGui::Text("MyStruct");
 		ImGui::Text("flags: %s", enums::GetFlagLabel(obj.flags).c_str());
 		ImGui::Text("format: %s", enums::GetEnumLabel(obj.format));
