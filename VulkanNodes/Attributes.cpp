@@ -19,44 +19,6 @@ namespace ne {
 		return hasModified;
 	}
 
-	bool ValueAttribute::Drawer::operator()(VkAttachmentLoadOp& val) {
-		const char* previewVal = enums::VkAttachmentLoadOpDict[val];
-		bool wasUsed = false;
-		if (ImGui::BeginCombo("##hidelabel", previewVal, ImGuiComboFlags_PopupAlignLeft | ImGuiComboFlags_HeightLarge)) {
-			for (auto& [opVal, opLabel] : enums::VkAttachmentLoadOpDict) {
-				const bool is_selected = (val == opVal);
-				if (ImGui::Selectable(opLabel, is_selected)) {
-					val = opVal;
-					wasUsed = true;
-				}
-
-				if (is_selected)
-					ImGui::SetItemDefaultFocus();
-			}
-			ImGui::EndCombo();
-		}
-		return wasUsed;
-	}
-
-	bool ValueAttribute::Drawer::operator()(VkAttachmentStoreOp& val) {
-		const char* previewVal = enums::VkAttachmentStoreOpDict[val];
-		bool wasUsed = false;
-		if (ImGui::BeginCombo("##hidelabel", previewVal, ImGuiComboFlags_PopupAlignLeft | ImGuiComboFlags_HeightLarge)) {
-			for (auto& [opVal, opLabel] : enums::VkAttachmentStoreOpDict) {
-				const bool is_selected = (val == opVal);
-				if (ImGui::Selectable(opLabel, is_selected)) {
-					val = opVal;
-					wasUsed = true;
-				}
-
-				if (is_selected)
-					ImGui::SetItemDefaultFocus();
-			}
-			ImGui::EndCombo();
-		}
-		return wasUsed;
-	}
-
 	bool ValueAttribute::Drawer::operator()(VkImageLayout& val) {
         int index = enums::GetIndex(val);
         bool wasUsed = false;

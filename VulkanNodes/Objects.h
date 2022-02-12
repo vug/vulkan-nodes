@@ -21,6 +21,19 @@ namespace ne {
 			{VK_ATTACHMENT_STORE_OP_NONE_EXT, "None Ext"},
 		};
 
+		template <typename TVkEnum>
+		const std::unordered_map<TVkEnum, const char*>& GetDict() {
+			if constexpr (std::is_same_v<TVkEnum, VkAttachmentLoadOp>)
+				return VkAttachmentLoadOpDict;
+			else if constexpr (std::is_same_v<TVkEnum, VkAttachmentStoreOp>)
+				return VkAttachmentStoreOpDict;
+		}
+
+		template <typename TVkEnum>
+		const char* GetLabel2(const TVkEnum& val) {
+			return GetDict<TVkEnum>().at(val);
+		}
+
 		static const char* VkImageLayoutLabels[] = { "Undefined", "Color Attachment Optimal", "Depth Stencil Attachment Optimal",
 		"Shader Read-Only Optimal", "Transfer Source Optimal", "Transfer Destination Optimal", "Depth Attachment Optimal",
 		"Present Source Khronos" };

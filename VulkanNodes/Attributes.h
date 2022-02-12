@@ -3,6 +3,7 @@
 #include "Objects.h"
 
 #include <vulkan/vulkan.h>
+#include "dependencies/imnodes.h"
 
 #include <optional>
 #include <string>
@@ -36,13 +37,37 @@ namespace ne {
 		ValueAttribute(std::string title, ValueRef value)
 			: AttributeBase{ title }, value{ value } {}
 
+		template <typename TVkEnum>
+		static bool DrawVkEnum(TVkEnum& val) {
+			const char* previewVal = enums::GetLabel2(val);
+			bool wasUsed = false;
+			if (ImGui::BeginCombo("##hidelabel", previewVal, ImGuiComboFlags_PopupAlignLeft | ImGuiComboFlags_HeightLarge)) {
+				for (auto& [opVal, opLabel] : enums::GetDict<TVkEnum>()) {
+					const bool is_selected = (val == opVal);
+					if (ImGui::Selectable(opLabel, is_selected)) {
+						val = opVal;
+						wasUsed = true;
+					}
+
+					if (is_selected)
+						ImGui::SetItemDefaultFocus();
+				}
+				ImGui::EndCombo();
+			}
+			return wasUsed;
+		}
+
 		// Visitor that draws UI for ValueAttribute editing
 		struct Drawer {
 			bool operator()(float& val);
 			bool operator()(int& val);
 			bool operator()(YourEnum& val);
-			bool operator()(VkAttachmentLoadOp& val);
-			bool operator()(VkAttachmentStoreOp& val);
+			bool operator()(VkAttachmentLoadOp& val) {
+				return DrawVkEnum(val);
+			}
+			bool operator()(VkAttachmentStoreOp& val) {
+				return DrawVkEnum(val);
+			}
 			bool operator()(VkImageLayout& val);
 		};
 
