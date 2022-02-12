@@ -95,11 +95,15 @@ namespace ne {
 	};
 
 	struct MyStruct {
+		// TODO: Add VkAttachmentDescriptionFlags, then becomes VkAttachmentDescription
 		VkFormat format;
 		VkSampleCountFlagBits samples = VK_SAMPLE_COUNT_1_BIT;
 		VkAttachmentLoadOp loadOp;
 		VkAttachmentStoreOp storeOp;
+		VkAttachmentLoadOp stencilLoadOp;
+		VkAttachmentStoreOp stencilStoreOp;
 		VkImageLayout initialLayout;
+		VkImageLayout finalLayout;
 	};
 
 	struct YourStruct {

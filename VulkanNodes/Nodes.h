@@ -98,7 +98,10 @@ namespace ne {
 			inputs.emplace_back("samples", myStruct.samples);
 			inputs.emplace_back("load op", myStruct.loadOp);
 			inputs.emplace_back("store op", myStruct.storeOp);
+			inputs.emplace_back("stencil load op", myStruct.stencilLoadOp);
+			inputs.emplace_back("stencil store op", myStruct.stencilStoreOp);
 			inputs.emplace_back("initial layout", myStruct.initialLayout);
+			inputs.emplace_back("final layout", myStruct.finalLayout);
 		}
 		void AddInputs(YourStruct& yourStruct) {
 			inputs.emplace_back("num", yourStruct.num);

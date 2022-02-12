@@ -40,7 +40,10 @@ namespace ne {
 		ImGui::Text("samples: %s", enums::GetFlagLabel(obj.samples).c_str());
 		ImGui::Text("load op: %s", enums::GetEnumLabel(obj.loadOp));
 		ImGui::Text("store op: %s", enums::GetEnumLabel(obj.storeOp));
+		ImGui::Text("stencil load op: %s", enums::GetEnumLabel(obj.stencilLoadOp));
+		ImGui::Text("stencil store op: %s", enums::GetEnumLabel(obj.stencilStoreOp));
 		ImGui::Text("initial layout: %s", enums::GetEnumLabel(obj.initialLayout));
+		ImGui::Text("final layout: %s", enums::GetEnumLabel(obj.finalLayout));
 	}
 
 	void ObjectViewerNode::Drawer::operator()(YourStruct& obj) {
