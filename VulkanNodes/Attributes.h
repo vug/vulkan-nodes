@@ -81,6 +81,8 @@ namespace ne {
 			bool operator()(float& val);
 			bool operator()(int& val);
 			bool operator()(YourEnum& val);
+
+			// Enums
 			bool operator()(VkFormat& val) {
 				return DrawVkEnum(val);
 			}
@@ -93,10 +95,11 @@ namespace ne {
 			bool operator()(VkImageLayout& val) {
 				return DrawVkEnum(val);
 			}
-
 			bool operator()(VkSampleCountFlagBits& val) {
-				return DrawVkFlags(val);
+				return DrawVkEnum(val);
 			}
+
+			// Flags
 			bool operator()(VkColorComponentFlagBits& val) {
 				return DrawVkFlags(val);
 			}
